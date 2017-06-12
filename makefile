@@ -1,6 +1,6 @@
 
 
-slave_tb: slave_tb.vhd slave_tb
+slave_tb: slave_tb.vhd slave
 	@echo "napisac SPRAWKO !!!"
 	ghdl -a $@.vhd
 	ghdl -e $@
@@ -14,12 +14,12 @@ slave_tb: slave_tb.vhd slave_tb
 vhdl_txt: vhdl_txt.vhd
 	ghdl -a $@.vhd
 
-%: %.vhd vhdl_txt
+%: %.vhd
 	ghdl -a $@.vhd
 	ghdl -e $@
 
 
 clean:
-	rm -f *.o *.vcd slave slave_tb work-obj93.cf 
+	rm -f *.o *.vcd slave slave_tb work-obj93.cf
 
 .PHONY: slave_tb
