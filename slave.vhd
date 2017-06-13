@@ -7,16 +7,16 @@ use IEEE.NUMERIC_STD.ALL;
 -- a (working) skeleton template for slave device on 8-bit bus
 --    capable of executing commands sent on the bus in the sequence:
 --    1) device_address (8 bits)
---		2) cmd_opcode (4 bits) & reserved (4 bits) 
+--		2) cmd_opcode (4 bits) & reserved (4 bits)
 --		3) (optional) cmd_args (8 bits)
 --
--- currently supported commands: 
+-- currently supported commands:
 -- 	* ID 			[0010] - get device address
 -- 	* DATA_REQ 	[1111] - send current result in the next clockpulse
 -- 	* NOP 		[0000] - don't do anything
 -----------------------------------------------------------------------
 -- debugging information on current state of statemachine and command
--- executed and input buffer register is given in outputs, vstate, 
+-- executed and input buffer register is given in outputs, vstate,
 -- vcurrent_cmd and vq, respectively
 -----------------------------------------------------------------------
 
@@ -74,7 +74,7 @@ begin
  case current_s is
    when IDLE =>
 		vstate <= "000001";		-- set for debugging
-		if q = identifier and sending /= '1'		
+		if q = identifier and sending /= '1'
 		then
 	      next_s <= CMD;
 		else
@@ -105,13 +105,16 @@ begin
 			when DATA_REQ
 				=> sending <= '1';
 			--
-			-- here other commands execution  
+			-- here other commands execution
 			--
+			when ADD
+                => result_reg <= q;
+
 			when others
 				=> result_reg <= result_reg;
 		end case;
 		next_s <= IDLE;
-   when others => 
+   when others =>
 		vstate <= "111111";
 		next_s <= IDLE;
    end case;
@@ -126,8 +129,8 @@ state <= vstate;
 vq    <= q;
 with current_cmd select
  vcurrent_cmd <= "0001" when ADD,
-					  "0010" when ID, 
-					  "0011" when CRC, 
+					  "0010" when ID,
+					  "0011" when CRC,
 					  "0100" when DATA_REQ,
 					  "0000" when others;
 

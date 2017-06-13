@@ -1,18 +1,19 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 --USE IEEE.std_logic_unsigned.ALL;
- 
+USE work.txt_util.ALL;
+
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
 USE ieee.numeric_std.ALL;
- 
+
 ENTITY slave_tb IS
 END slave_tb;
- 
-ARCHITECTURE behavior OF slave_tb IS 
- 
+
+ARCHITECTURE behavior OF slave_tb IS
+
     -- Component Declaration for the Unit Under Test (UUT)
- 
+
     COMPONENT slave
 	 generic ( identifier : std_logic_vector (7 downto 0) );
     PORT(
@@ -23,15 +24,15 @@ ARCHITECTURE behavior OF slave_tb IS
 			vcurrent_cmd : out std_logic_vector(3 downto 0)
         );
     END COMPONENT;
-    
+
 
    --Inputs
    signal clk : std_logic := '0';
 
 	--BiDirs
    signal conn_bus : std_logic_vector(7 downto 0) := (others => 'Z');
-	
-	
+
+
 	-- outputs from UUT for debugging
 	signal state : std_logic_vector(5 downto 0);
 	signal vq : std_logic_vector (7 downto 0);
@@ -39,12 +40,63 @@ ARCHITECTURE behavior OF slave_tb IS
 
    -- Clock period definitions
    constant clk_period : time := 10 ns;
- 
+   constant ADDRESS_SLAVE_1 : std_logic_vector (7 downto 0) := "00000001";
+   constant ADDRESS_SLAVE_2 : std_logic_vector (7 downto 0) := "00000010";
+   constant ADDRESS_SLAVE_3 : std_logic_vector (7 downto 0) := "00000011";
+   constant ID_CMD          : std_logic_vector (7 downto 0) := "00100000";
+   constant DATA_REQ_CMD    : std_logic_vector (7 downto 0) := "01000000";
+   constant ADD_CMD         : std_logic_vector (7 downto 0) := "00010000";
+   constant NULL_ARG        : std_logic_vector (7 downto 0) := "00000000";
+
+    procedure performCmd(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; cmd : in std_logic_vector; arg : in std_logic_vector) is
+    begin
+        conn_bus <= address;
+        wait for clk_period;
+        conn_bus <= cmd;
+        wait for clk_period;
+        conn_bus <= arg;
+        wait for clk_period;
+    end performCmd;
+
+    procedure checkResults(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
+    begin
+        conn_bus <= address;
+		wait for clk_period;
+		conn_bus <= DATA_REQ_CMD;
+		wait for clk_period;
+
+		conn_bus <= "ZZZZZZZZ";
+		wait for clk_period;
+		assert conn_bus = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+		wait for clk_period*2;
+    end checkResults;
+
+
 BEGIN
- 
+
 	-- Instantiate the Unit Under Test (UUT)
-   uut: slave 
-	GENERIC MAP (identifier => "10101010")
+   uut1: slave
+	GENERIC MAP (identifier => ADDRESS_SLAVE_1)
+	PORT MAP (
+          conn_bus => conn_bus,
+          clk => clk,
+			 state => state,
+			 vq => vq,
+			 vcurrent_cmd => current_cmd
+        );
+
+    uut2: slave
+	GENERIC MAP (identifier => ADDRESS_SLAVE_2)
+	PORT MAP (
+          conn_bus => conn_bus,
+          clk => clk,
+			 state => state,
+			 vq => vq,
+			 vcurrent_cmd => current_cmd
+        );
+
+    uut3: slave
+	GENERIC MAP (identifier => ADDRESS_SLAVE_2)
 	PORT MAP (
           conn_bus => conn_bus,
           clk => clk,
@@ -61,45 +113,26 @@ BEGIN
 		clk <= '1';
 		wait for clk_period/2;
    end process;
- 
+
+
 
    -- Stimulus process
    stim_proc: process
-   begin		
+   begin
       -- hold reset state for 100 ns.
-      wait for 100 ns;	
+      wait for 100 ns;
 
-      wait for clk_period*10;
+        performCmd(conn_bus, ADDRESS_SLAVE_1, ID_CMD, NULL_ARG);
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , ADDRESS_SLAVE_1, "address");
 
-		-- address
-		conn_bus <= "10101010";
-		wait for clk_period;
-		-- CMD: id
-		conn_bus <= "00100000";
-		wait for clk_period*2;
-		-- address
-		conn_bus <= "10101010";
-		wait for clk_period;
-		-- CMD: data_req
-		conn_bus <= "01000000";
-		wait for clk_period;
-		-- this is needed to allow writing on bus by slave
-		conn_bus <= "ZZZZZZZZ";
+        performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "00001111");
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "00001111", "the same value as input of one argument adding");
 
-		-- other possible execution
-		wait for 3*clk_period;
-		-- address
-		conn_bus <= "10101010";
-		wait for clk_period;
-		-- CMD: add
-		conn_bus <= "00010000";
-		wait for clk_period;
-		-- add operands
-		conn_bus <= "00001111";
-		wait for 3*clk_period;
-		
-		
-		
+        performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "00001111");
+        performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "00000001");
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "00010000", "sum of two values");
+
+
       wait;
    end process;
 
