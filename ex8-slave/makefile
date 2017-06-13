@@ -17,7 +17,7 @@ vhdl_txt: vhdl_txt.vhd
 pack: pack.vhd
 	ghdl -a $@.vhd
 
-%: %.vhd vhdl_txt
+%: %.vhd vhdl_txt pack
 	ghdl -a $@.vhd
 	ghdl -e $@
 

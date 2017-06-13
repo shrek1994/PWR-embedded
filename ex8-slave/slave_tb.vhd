@@ -47,6 +47,7 @@ ARCHITECTURE behavior OF slave_tb IS
    constant ID_CMD          : std_logic_vector (7 downto 0) := "00100000";
    constant CRC_CMD         : std_logic_vector (7 downto 0) := "00110000";
    constant DATA_REQ_CMD    : std_logic_vector (7 downto 0) := "01000000";
+   constant SUB_CMD    : std_logic_vector (7 downto 0) := "01010000";
    constant RESET_CMD       : std_logic_vector (7 downto 0) := "11110000";
    constant NULL_ARG        : std_logic_vector (7 downto 0) := "00000000";
 
@@ -140,7 +141,23 @@ BEGIN
 
         performCmd(conn_bus, ADDRESS_SLAVE_1, RESET_CMD, NULL_ARG);
         performCmd(conn_bus, ADDRESS_SLAVE_1, CRC_CMD, "00001111");
-        checkResults(conn_bus, ADDRESS_SLAVE_1 , "01100111", "crc of one value");
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "00101101", "crc of one value"); -- !
+
+        performCmd(conn_bus, ADDRESS_SLAVE_1, RESET_CMD, NULL_ARG);
+        performCmd(conn_bus, ADDRESS_SLAVE_1, CRC_CMD, "00001111");
+        performCmd(conn_bus, ADDRESS_SLAVE_1, CRC_CMD, "00001111");
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "11101110", "crc of two values"); -- !
+
+        performCmd(conn_bus, ADDRESS_SLAVE_1, RESET_CMD, NULL_ARG);
+        performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "00001111");
+        performCmd(conn_bus, ADDRESS_SLAVE_1, SUB_CMD, "00001001");
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "00000110", "correct one sub");
+
+        performCmd(conn_bus, ADDRESS_SLAVE_1, RESET_CMD, NULL_ARG);
+        performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "01111111");
+        performCmd(conn_bus, ADDRESS_SLAVE_1, SUB_CMD, "00001000");
+        performCmd(conn_bus, ADDRESS_SLAVE_1, SUB_CMD, "00001000");
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "01101111", "correct two sub");
 
       wait;
    end process;

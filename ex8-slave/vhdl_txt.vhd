@@ -567,18 +567,18 @@ end print;
 -- appends contents of a string to a file until line feed occurs
 -- (LF is considered to be the end of the string)
 
-procedure str_write(file out_file: TEXT;
-                    new_string: in  string) is
- begin
-
-   for i in new_string'range loop
-      print(out_file, new_string(i));
-      if new_string(i) = LF then -- end of string
-         exit;
-      end if;
-   end loop;
-
-end str_write;
+-- procedure str_write(file out_file: TEXT;
+--                     new_string: in  string) is
+--  begin
+--
+--    for i in new_string'range loop
+--       print(out_file, new_string(i));
+--       if new_string(i) = LF then -- end of string
+--          exit;
+--       end if;
+--    end loop;
+--
+-- end str_write;
 
 
 
