@@ -43,9 +43,11 @@ ARCHITECTURE behavior OF slave_tb IS
    constant ADDRESS_SLAVE_1 : std_logic_vector (7 downto 0) := "00000001";
    constant ADDRESS_SLAVE_2 : std_logic_vector (7 downto 0) := "00000010";
    constant ADDRESS_SLAVE_3 : std_logic_vector (7 downto 0) := "00000011";
-   constant ID_CMD          : std_logic_vector (7 downto 0) := "00100000";
-   constant DATA_REQ_CMD    : std_logic_vector (7 downto 0) := "01000000";
    constant ADD_CMD         : std_logic_vector (7 downto 0) := "00010000";
+   constant ID_CMD          : std_logic_vector (7 downto 0) := "00100000";
+   constant CRC_CMD         : std_logic_vector (7 downto 0) := "00110000";
+   constant DATA_REQ_CMD    : std_logic_vector (7 downto 0) := "01000000";
+   constant RESET_CMD       : std_logic_vector (7 downto 0) := "11110000";
    constant NULL_ARG        : std_logic_vector (7 downto 0) := "00000000";
 
     procedure performCmd(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; cmd : in std_logic_vector; arg : in std_logic_vector) is
@@ -125,13 +127,20 @@ BEGIN
         performCmd(conn_bus, ADDRESS_SLAVE_1, ID_CMD, NULL_ARG);
         checkResults(conn_bus, ADDRESS_SLAVE_1 , ADDRESS_SLAVE_1, "address");
 
+        performCmd(conn_bus, ADDRESS_SLAVE_1, RESET_CMD, NULL_ARG);
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "00000000", "reset");
+
         performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "00001111");
         checkResults(conn_bus, ADDRESS_SLAVE_1 , "00001111", "the same value as input of one argument adding");
 
+        performCmd(conn_bus, ADDRESS_SLAVE_1, RESET_CMD, NULL_ARG);
         performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "00001111");
         performCmd(conn_bus, ADDRESS_SLAVE_1, ADD_CMD, "00000001");
         checkResults(conn_bus, ADDRESS_SLAVE_1 , "00010000", "sum of two values");
 
+        performCmd(conn_bus, ADDRESS_SLAVE_1, RESET_CMD, NULL_ARG);
+        performCmd(conn_bus, ADDRESS_SLAVE_1, CRC_CMD, "00001111");
+        checkResults(conn_bus, ADDRESS_SLAVE_1 , "01100111", "crc of one value");
 
       wait;
    end process;

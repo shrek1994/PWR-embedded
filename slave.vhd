@@ -2,6 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 --USE IEEE.std_logic_unsigned.ALL;
 use IEEE.NUMERIC_STD.ALL;
+USE work.txt_util.ALL;
 
 -----------------------------------------------------------------------
 -- a (working) skeleton template for slave device on 8-bit bus
@@ -40,10 +41,10 @@ signal next_s : state_type := IDLE;
 signal vstate : std_logic_vector(5 downto 0) := (others => '0');
 
 -- command definitions
-type cmd_type is (NOP, ADD, ID, CRC, DATA_REQ);
+type cmd_type is (NOP, ADD, ID, CRC, DATA_REQ, RESET);
 attribute enum_encoding: string;
 attribute enum_encoding of cmd_type: type is
-				"0000 0001 0010 0011 1111";
+				"0000 0001 0010 0011 0100 1111";
 signal current_cmd : cmd_type := NOP;
 
 -- input buffer
@@ -53,7 +54,9 @@ signal q : std_logic_vector (7 downto 0) := (others => '0');
 signal result_reg : std_logic_vector (7 downto 0) := (others => '0');
 signal sending : std_logic := '0';
 
+signal acc : std_logic_vector(7 downto 0) :=  (others => '0');
 
+constant debug : boolean := false;
 
 begin
 
@@ -69,6 +72,7 @@ end process;
 
 nextstate: process(current_s,q)
   variable fourbit : std_logic_vector(3 downto 0) := "0000";
+  variable tmp : std_logic_vector(7 downto 0) :=  (others => '0');
 begin
 
  case current_s is
@@ -91,6 +95,8 @@ begin
 			when "0010" => current_cmd <= ID;
 			when "0011" => current_cmd <= CRC;
 			when "0100" => current_cmd <= DATA_REQ;
+
+			when "1111" => current_cmd <= RESET;
 			when others => current_cmd <= NOP;
 		end case;
 		next_s <= RUN;
@@ -107,8 +113,14 @@ begin
 			--
 			-- here other commands execution
 			--
+			when RESET
+                => result_reg <= "00000000";
 			when ADD
-                => result_reg <= q;
+                =>
+                if debug then
+                    report "adding: " & str(result_reg) & " + " & str(q);
+                end if;
+                result_reg <= std_logic_vector(unsigned(result_reg) + unsigned(q));
 
 			when others
 				=> result_reg <= result_reg;

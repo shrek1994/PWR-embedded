@@ -1,10 +1,10 @@
 
 
-slave_tb: slave_tb.vhd slave vhdl_txt
+slave_tb: slave_tb.vhd slave vhdl_txt pack
 	@echo "napisac SPRAWKO !!!"
 	ghdl -a $@.vhd
 	ghdl -e $@
-	ghdl -r $@ --vcd=$@.vcd --stop-time=500ns
+	ghdl -r $@ --vcd=$@.vcd --stop-time=1ms
 
 %_tb: %_tb.vhd %
 	ghdl -a $@.vhd
@@ -14,7 +14,10 @@ slave_tb: slave_tb.vhd slave vhdl_txt
 vhdl_txt: vhdl_txt.vhd
 	ghdl -a $@.vhd
 
-%: %.vhd
+pack: pack.vhd
+	ghdl -a $@.vhd
+
+%: %.vhd vhdl_txt
 	ghdl -a $@.vhd
 	ghdl -e $@
 
