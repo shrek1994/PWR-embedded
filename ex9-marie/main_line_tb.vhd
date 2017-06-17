@@ -15,7 +15,9 @@ architecture behavior of main_line_tb is
     port(
         run       : in  std_logic;
         input       : in std_logic_vector(4 downto 0);
-        output      : out std_logic_vector(4 downto 0)
+        output      : out std_logic_vector(4 downto 0);
+        debug_ram_out   : out std_logic_vector(8 downto 0);
+        debug_address   : out std_logic_vector(4 downto 0)
     );
     end component;
 
@@ -32,6 +34,8 @@ architecture behavior of main_line_tb is
     signal run : std_logic := '0';
     signal input : std_logic_vector(4 downto 0) := (OTHERS => 'Z');
     signal output : std_logic_vector(4 downto 0) := (OTHERS => 'Z');
+    signal debug_ram_out : std_logic_vector(8 downto 0) := (OTHERS => 'Z');
+    signal debug_address : std_logic_vector(4 downto 0) := (OTHERS => 'Z');
     constant clk_period : Time := 10 ns;
 begin
 
@@ -39,12 +43,14 @@ begin
     port map (
         run => run,
         input => input,
-        output => output
+        output => output,
+
+        debug_ram_out => debug_ram_out,
+        debug_address => debug_address
     );
 
     simul_process : process
     begin
-        wait for clk_period;
         run <= '1';
 
         wait for clk_period * 10;

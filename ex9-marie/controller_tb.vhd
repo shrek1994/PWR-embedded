@@ -45,16 +45,16 @@ ARCHITECTURE behavior OF controller_tb IS
 BEGIN
 
 	-- Instantiate the Unit Under Test (UUT)
-   uut: controller PORT MAP (
-          instruction => instruction,
-          operation => operation,
-          value => value,
-          address => address,
-          save_to_ram => save_to_ram,
-          save_to_pc => save_to_pc,
-          save_to_acc => save_to_acc,
-          next_pc => next_pc
-        );
+--    uut: controller PORT MAP (
+--           instruction => instruction,
+--           operation => operation,
+--           value => value,
+--           address => address,
+--           save_to_ram => save_to_ram,
+--           save_to_pc => save_to_pc,
+--           save_to_acc => save_to_acc,
+--           next_pc => next_pc
+--         );
 
    -- Clock process definitions
    clk_process :process
@@ -71,7 +71,7 @@ BEGIN
    begin
         wait for 100 ns;
 
-        instruction <= "000100001"; -- load 00001
+--         instruction <= "000100001"; -- load 00001
         wait for 1 ns;
 
 
