@@ -4,7 +4,8 @@ TEST_BENCH := \
 	pc_tb \
 	acc_register_tb \
 	controller_tb \
-	alu_tb
+	alu_tb \
+	main_line_tb
 
 OBJ := $(TEST_BENCH:_tb=)
 STOP_TIME := 1ms

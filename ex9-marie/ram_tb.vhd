@@ -10,8 +10,8 @@ architecture behavior of ram_tb is
     component ram is
         Port (address   : in  STD_LOGIC_VECTOR (4 downto 0);
               save      : in  std_logic;
-              data_in   : in  STD_LOGIC_VECTOR (8 downto 0);
-              data_out  : out STD_LOGIC_VECTOR (8 downto 0));
+              ram_in   : in  STD_LOGIC_VECTOR (8 downto 0);
+              ram_out  : out STD_LOGIC_VECTOR (8 downto 0));
     end component;
 
     signal clk :std_logic := '0';
@@ -27,8 +27,8 @@ BEGIN
     uut: ram PORT MAP (
         address => address,
         save => save,
-        data_in => data_in,
-        data_out => data_out
+        ram_in => data_in,
+        ram_out => data_out
     );
 
     -- Clock process definitions

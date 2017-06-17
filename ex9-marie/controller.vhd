@@ -18,42 +18,73 @@ end controller;
 
 architecture Flow of controller is
     type state is (FETCH, DECODE, EXECUTE, STORE, HALT);
-    signal current_state : state := FETCH;
+    signal current_state : state := HALT;
     signal next_state : state := FETCH;
+
+    type cmd_type is (LOAD, STORE, ADD, SUBT, INPUT, OUTPUT, HALT, SKIPCOND, JUMP);
+    attribute enum_encoding: string;
+    attribute enum_encoding of cmd_type: type is
+				"0001 0010 0011 0100 0101 0110 0111 1000 1001";
+    signal current_cmd : cmd_type := HALT;
+    constant debug : boolean := true;
+
+    signal clk : std_logic := '0';
+    constant clk_period : time := 10 ns;
+
+    signal instruction_bits : std_logic_vector(3 downto 0);
+    signal argument : std_logic_vector(4 downto 0);
 begin
+    instruction_process : process (instruction)
+    begin
+        case current_state is
+            when FETCH =>
+                instruction_bits <= instruction(8 downto 5);
+                argument <= instruction(4 downto 0);
+                next_state <= DECODE;
+            when others =>
+                null;
+        end case;
+    end process;
 
--- state_advance: process(clk, reset)
--- begin
--- --
--- --   	IF reset = '1' THEN
--- -- 		stan_teraz <= S0;
--- -- 	ELSIF rising_edge(clk) then
--- -- 	    if pusher = '1' then
--- -- 	    	stan_teraz <= stan_potem;
--- -- 	    elsif pusher = '0' and stan_teraz = S2 then
--- -- 	    	stan_teraz <= S0;
--- -- 	 	end if;
--- --   	END IF;
--- end process;
+    clock : process
+    begin
+        clk <= '0';
+        wait for clk_period / 2;
+        clk <= '1';
+        current_state <= next_state;
+        wait for clk_period / 2;
+        wait;
+    end process;
 
--- next_stateagds: process(current_state)
--- begin
--- --    case stan_teraz is
--- --      when S0 =>
--- -- 				stan_potem <= S1;
--- -- 				driver <= "00";
--- -- 	  when S1 =>
--- -- 				stan_potem <= S2;
--- -- 				driver <= "10";
--- -- 	  when S2 =>
--- -- 				stan_potem <= S3;
--- -- 				driver <= "11";
--- -- 	  when S3 =>
--- -- 				stan_potem <= S1;
--- -- 				driver <= "01";
--- --
--- --    end case;
--- end process;
+    nextstate: process(current_state, clk)
+    begin
+        if clk = '1' then
+        case current_state is
+            when DECODE =>
+                print(debug, "DECODE: instruction_bits: " & str(instruction_bits));
+                case instruction_bits is
+                    when "0001" =>
+                        current_cmd <= LOAD;
+                    when "0010" =>
+                        current_cmd <= STORE;
+                    when "0011" =>
+                        current_cmd <= ADD;
+                    when "0100" =>
+                        current_cmd <= SUBT;
+                    when others =>
+                        current_cmd <= HALT;
+                end case;
+            when EXECUTE =>
+                null;
+            when STORE =>
+                null;
+            when HALT =>
+                null;
+            when others =>
+                null;
+        end case;
+        end if;
+    end process;
 
 end Flow;
 

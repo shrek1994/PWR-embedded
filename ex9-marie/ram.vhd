@@ -8,8 +8,8 @@ entity ram is
     generic (RAM_DATA : dataType := ( others => "000000000"));
     Port (address   : in  STD_LOGIC_VECTOR (4 downto 0);
           save      : in std_logic;
-          data_in   : in  STD_LOGIC_VECTOR (8 downto 0);
-          data_out  : out STD_LOGIC_VECTOR (8 downto 0));
+          ram_in   : in  STD_LOGIC_VECTOR (8 downto 0);
+          ram_out  : out STD_LOGIC_VECTOR (8 downto 0));
 end ram;
 
 architecture Behavioral of ram is
@@ -20,10 +20,10 @@ begin
 nextAddress: process(address, save)
 begin
     if save = '1' then
-        data(to_integer(unsigned(address))) <= data_in;
-        data_out <= "ZZZZZZZZZ";
+        data(to_integer(unsigned(address))) <= ram_in;
+        ram_out <= "ZZZZZZZZZ";
     else
-        data_out <= data(to_integer(unsigned(address)));
+        ram_out <= data(to_integer(unsigned(address)));
     end if;
 end process;
 
