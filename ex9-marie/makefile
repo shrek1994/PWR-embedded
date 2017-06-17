@@ -1,4 +1,9 @@
-all: ram_tb pc_tb
+all: ram_tb pc_tb acc_register_tb
+
+acc_register_tb: acc_register_tb.vhd acc_register
+	ghdl -a $@.vhd
+	ghdl -e $@
+	ghdl -r $@ --vcd=$@.vcd --stop-time=1ms
 
 pc_tb: pc_tb.vhd pc
 	ghdl -a $@.vhd
@@ -19,6 +24,6 @@ vhdl_txt: vhdl_txt.vhd
 
 
 clean:
-	rm -f *.o *.vcd pc pc_tb ram ram_tb work-obj93.cf
+	rm -f *.o *.vcd acc_register_tb acc_register pc pc_tb ram ram_tb work-obj93.cf
 
-.PHONY: ram_tb
+.PHONY: all
