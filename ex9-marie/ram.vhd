@@ -18,7 +18,7 @@ nextAddress: process(address, save)
 begin
     if save = '1' then
         data(to_integer(unsigned(address))) <= data_in;
-        data_out <= "000000000"; -- "ZZZZZZZZZ";
+        data_out <= "ZZZZZZZZZ";
     else
         data_out <= data(to_integer(unsigned(address)));
     end if;

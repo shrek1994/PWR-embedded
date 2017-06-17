@@ -1,29 +1,28 @@
-all: ram_tb pc_tb acc_register_tb
+GHDL := ghdl
+TEST_BENCH := \
+	ram_tb \
+	pc_tb \
+	acc_register_tb \
+	controller_tb \
+	alu_tb
 
-acc_register_tb: acc_register_tb.vhd acc_register
-	ghdl -a $@.vhd
-	ghdl -e $@
-	ghdl -r $@ --vcd=$@.vcd --stop-time=1ms
+OBJ := $(TEST_BENCH:_tb=)
 
-pc_tb: pc_tb.vhd pc
-	ghdl -a $@.vhd
-	ghdl -e $@
-	ghdl -r $@ --vcd=$@.vcd --stop-time=1ms
+all: $(TEST_BENCH)
 
-ram_tb: ram_tb.vhd ram
-	ghdl -a $@.vhd
-	ghdl -e $@
-	ghdl -r $@ --vcd=$@.vcd --stop-time=1ms
+$(TEST_BENCH): %_tb : % %.vhd
+	$(GHDL) -a $@.vhd
+	$(GHDL) -e $@
+	$(GHDL) -r $@ --vcd=$@.vcd --stop-time=1ms
 
 vhdl_txt: vhdl_txt.vhd
-	ghdl -a $@.vhd
+	$(GHDL) -a $@.vhd
 
 %: %.vhd vhdl_txt
-	ghdl -a $@.vhd
-	ghdl -e $@
-
+	$(GHDL) -a $@.vhd
+	$(GHDL) -e $@
 
 clean:
-	rm -f *.o *.vcd acc_register_tb acc_register pc pc_tb ram ram_tb work-obj93.cf
+	rm -f *.o *.vcd $(TEST_BENCH) $(OBJ) work-obj93.cf
 
-.PHONY: all
+.PHONY: all clean
