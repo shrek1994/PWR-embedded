@@ -1,8 +1,11 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
+use work.dataType_pkg.all;
+
 
 entity ram is
+    generic (RAM_DATA : dataType := ( others => "000000000"));
     Port (address   : in  STD_LOGIC_VECTOR (4 downto 0);
           save      : in std_logic;
           data_in   : in  STD_LOGIC_VECTOR (8 downto 0);
@@ -24,6 +27,5 @@ begin
     end if;
 end process;
 
---  data_out <= data(unsigned(address)) when save = '0' else "ZZZZZZZZZ";
 
 end Behavioral;

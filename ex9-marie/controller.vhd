@@ -5,17 +5,19 @@ USE work.txt_util.ALL;
 
 entity controller is
   port(
-	instruction:    in std_logic_vector (8 downto 0);
-	operation:  out std_logic_vector (1 downto 0) := "ZZ";
-	value :     out std_logic_vector(4 downto 0) := "ZZZZZ";
-	save_to_ram : out std_logic := '0';
-	save_to_pc : out std_logic := '0';
-	next_pc    : out std_logic := '0'
+	instruction:   in std_logic_vector (8 downto 0);
+	operation:     out std_logic_vector (1 downto 0) := "ZZ";
+	value :        out std_logic_vector(4 downto 0) := "ZZZZZ";
+	address :      out std_logic_vector(4 downto 0) := "ZZZZZ";
+	save_to_ram :  out std_logic := '0';
+	save_to_pc :   out std_logic := '0';
+	save_to_acc :  out std_logic := '0';
+	next_pc :      out std_logic := '0'
   );
 end controller;
 
 architecture Flow of controller is
-    type state is (FETCH, DECODE, EXECUTE, STORE);
+    type state is (FETCH, DECODE, EXECUTE, STORE, HALT);
     signal current_state : state := FETCH;
     signal next_state : state := FETCH;
 begin

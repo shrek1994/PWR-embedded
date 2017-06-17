@@ -13,8 +13,10 @@ ARCHITECTURE behavior OF controller_tb IS
             instruction:    in std_logic_vector (8 downto 0);
             operation:  out std_logic_vector (1 downto 0);
             value :     out std_logic_vector(4 downto 0);
+            address :     out std_logic_vector(4 downto 0);
             save_to_ram : out std_logic;
             save_to_pc : out std_logic;
+            save_to_acc : out std_logic;
             next_pc    : out std_logic
         );
     END COMPONENT;
@@ -26,8 +28,10 @@ ARCHITECTURE behavior OF controller_tb IS
  	--Outputs
    signal operation : std_logic_vector(1 downto 0);
    signal value : std_logic_vector(4 downto 0);
+   signal address : std_logic_vector(4 downto 0);
    signal save_to_ram : std_logic;
    signal save_to_pc : std_logic;
+   signal save_to_acc : std_logic;
    signal next_pc : std_logic;
 
    -- Clock period definitions
@@ -45,8 +49,10 @@ BEGIN
           instruction => instruction,
           operation => operation,
           value => value,
+          address => address,
           save_to_ram => save_to_ram,
           save_to_pc => save_to_pc,
+          save_to_acc => save_to_acc,
           next_pc => next_pc
         );
 
@@ -63,15 +69,15 @@ BEGIN
    -- Stimulus process
    stim_proc: process
    begin
-      wait for 100 ns;
+        wait for 100 ns;
 
-      --
---       instruction <=
-
-
+        instruction <= "000100001"; -- load 00001
+        wait for 1 ns;
 
 
-      wait;
+
+
+        wait;
    end process;
 
 END;

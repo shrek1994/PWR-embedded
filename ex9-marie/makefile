@@ -7,18 +7,22 @@ TEST_BENCH := \
 	alu_tb
 
 OBJ := $(TEST_BENCH:_tb=)
+STOP_TIME := 1ms
 
 all: $(TEST_BENCH)
 
 $(TEST_BENCH): %_tb : % %.vhd
 	$(GHDL) -a $@.vhd
 	$(GHDL) -e $@
-	$(GHDL) -r $@ --vcd=$@.vcd --stop-time=1ms
+	$(GHDL) -r $@ --vcd=$@.vcd --stop-time=$(STOP_TIME)
 
 vhdl_txt: vhdl_txt.vhd
 	$(GHDL) -a $@.vhd
 
-%: %.vhd vhdl_txt
+dataType_pkg: dataType_pkg.vhd
+	$(GHDL) -a $@.vhd
+
+%: %.vhd vhdl_txt dataType_pkg
 	$(GHDL) -a $@.vhd
 	$(GHDL) -e $@
 

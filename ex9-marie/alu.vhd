@@ -21,6 +21,9 @@ begin
         when "10" =>
             -- subt
             result <= STD_LOGIC_VECTOR(unsigned(data_from_accumulator) - unsigned(data_from_controller));
+        when "00" =>
+            -- send to acc
+            result <= data_from_controller;
         when others =>
             result <= "ZZZZZZZZZ";
     end case;
