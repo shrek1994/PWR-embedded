@@ -3,8 +3,8 @@ TEST_BENCH := \
 	ram_tb \
 	pc_tb \
 	acc_register_tb \
-	controller_tb \
 	alu_tb \
+#	controller_tb \
 #	main_line_tb
 
 INTEGRATION_TESTS := \

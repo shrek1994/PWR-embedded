@@ -41,14 +41,12 @@ architecture behavior of pc_tb is
     end checkData;
 
 BEGIN
-    -- Instantiate the Unit Under Test (UUT)
     uut: pc generic map (DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
         bus_data => bus_data
     );
 
-    -- Clock process definitions
     clk_process :process
     begin
         clk <= '0';
@@ -57,7 +55,6 @@ BEGIN
         wait for clk_period / 2;
     end process;
 
-    -- Stimulus process
     stim_proc: process
     begin
 

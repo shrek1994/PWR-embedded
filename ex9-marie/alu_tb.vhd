@@ -8,47 +8,86 @@ end alu_tb;
 
 architecture behavior of alu_tb is
     component alu is
-        Port (operation              : in STD_LOGIC_VECTOR (1 downto 0);
-            data_from_controller   : in STD_LOGIC_VECTOR (8 downto 0);
-            data_from_accumulator  : in STD_LOGIC_VECTOR (8 downto 0);
-            result                 : out STD_LOGIC_VECTOR (8 downto 0));
+        generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : in std_logic_vector (15 downto 0);
+            acc_in : in std_logic_vector(8 downto 0);
+            acc_out : out std_logic_vector(8 downto 0)
+            );
     end component;
 
+    signal clk : std_logic := '0';
+    constant clk_period :time := 10 ns;
+    constant DEBUG : boolean := true;
 
-    signal operation : std_logic_vector (1 downto 0) := (others => '0');
-    signal data_from_controller    : STD_LOGIC_VECTOR (8 downto 0) := (others => '0');
-    signal data_from_accumulator  : std_logic_vector(8 downto 0) := (others => '0');
-    signal result : std_logic_vector(8 downto 0) := (others => '0');
+    signal bus_data : std_logic_vector(15 downto 0) := (others => 'Z');
+    signal acc_in :  std_logic_vector(8 downto 0) := (others => 'Z');
+    signal acc_out : std_logic_vector(8 downto 0) := (others => 'Z');
 
-    constant ADD : std_logic_vector(1 downto 0) := "01";
-    constant SUB : std_logic_vector(1 downto 0) := "10";
+    constant ALU_ID : std_logic_vector (2 downto 0) := "101";
+    constant RESET_CMD : std_logic_vector (3 downto 0) := "1111";
+    constant ADD_CMD : std_logic_vector (3 downto 0):= "0100";
+    constant SUBT_CMD : std_logic_vector (3 downto 0):= "0101";
+    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
+    constant NOTHING : std_logic_vector (15 downto 0) := "ZZZZZZZZZZZZZZZZ";
+
+    procedure operation(signal bus_data : inout std_logic_vector; signal acc_in : inout std_logic_vector; left : std_logic_vector; oper : std_logic_vector; right : in std_logic_vector) is
+    begin
+        acc_in <= left;
+        bus_data <= ALU_ID & oper & right;
+        wait for clk_period;
+        bus_data <= NOTHING;
+    end operation;
+
+    procedure adding(signal bus_data : inout std_logic_vector; signal acc_in : inout std_logic_vector;
+                     left : in std_logic_vector; right : in std_logic_vector) is
+    begin
+        operation(bus_data, acc_in, left, ADD_CMD, right);
+    end adding;
+
+    procedure subtracting(signal bus_data : inout std_logic_vector; signal acc_in : inout std_logic_vector;
+                          left : in std_logic_vector; right : in std_logic_vector) is
+    begin
+        operation(bus_data, acc_in, left, SUBT_CMD, right);
+    end subtracting;
+
+    procedure checkResult(signal acc_in : inout std_logic_vector; expected : std_logic_vector; msg : string) is
+    begin
+        wait for clk_period / 2;
+        assert acc_out = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(acc_out) & "'";
+        wait for clk_period / 2;
+    end checkResult;
+
 BEGIN
-    -- Instantiate the Unit Under Test (UUT)
-    uut: alu PORT MAP (
-        operation => operation,
-        data_from_controller => data_from_controller,
-        data_from_accumulator => data_from_accumulator,
-        result => result
+    uut: alu generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data,
+        acc_in => acc_in,
+        acc_out => acc_out
     );
 
-    -- Stimulus process
+    clk_process :process
+    begin
+        clk <= '0';
+        wait for clk_period / 2;
+        clk <= '1';
+        wait for clk_period / 2;
+    end process;
+
     stim_proc: process
     begin
 
     wait for 100 ns;
 
-    operation <= ADD;
-    data_from_accumulator <= "010101010";
-    data_from_controller  <= "101010100";
-    wait for 1 ns;
-    assert result = "111111110" report "ERROR! expected:" & "111111110" & ", was: " & str(result);
+    adding(bus_data, acc_in, "000110011", "001000100");
+    checkResult(acc_in, "001110111", "correct adding");
 
+    acc_in <= acc_out;
 
-    operation <= SUB;
-    data_from_accumulator <= "000111110";
-    data_from_controller  <= "000010110";
-    wait for 1 ns;
-    assert result = "000101000" report "ERROR! expected:" & "000101000" & ", was: " & str(result);
+    subtracting(bus_data, acc_in, "011111111", "001010100");
+    checkResult(acc_in, "010101011", "correct subtracting");
 
     wait;
     end process;
