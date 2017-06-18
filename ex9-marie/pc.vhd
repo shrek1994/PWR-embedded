@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 use work.txt_util.all;
 
 entity pc is
-    generic (DEBUG : boolean := true);
+    generic (DEBUG : boolean := false);
     Port (
         clk : in std_logic;
         bus_data : inout std_logic_vector (15 downto 0)
