@@ -17,6 +17,7 @@ architecture Behavioral of ram is
     constant OWN_ID : std_logic_vector (2 downto 0) := "001";
     signal next_state_on_rising_edge : std_logic := '1';
     signal sending : std_logic := '0';
+    signal should_send : std_logic := '0';
 
     type state_type is (IDLE, CMD, RUN);
     signal current_state : state_type := IDLE;
@@ -56,8 +57,13 @@ begin
         current_state <= next_state;
         sleep := "11";
     end if;
-    if sending = '1' and sleep = "00"then
+    if should_send = '1' and clk = '0'
+    then
+        sending <= '1';
+    end if;
+    if sending = '1' and sleep = "00" then
         current_state <= next_state;
+        sending <= '0';
     end if;
     sleep := sleep - 1;
 end process;
@@ -78,7 +84,7 @@ begin
 
     case current_state is
         when IDLE =>
-            sending <= '0';
+            should_send <= '0';
             id := bus_data(15 downto 13);
             command := bus_data(12 downto 9);
             data := bus_data(8 downto 0);
@@ -90,7 +96,7 @@ begin
             else
                 next_state <= IDLE;
             end if;
-        sending <= '0';
+--         sending <= '0';
     when CMD =>
         case current_cmd is
             when GET_DATA =>
@@ -110,7 +116,7 @@ begin
         case current_cmd is
             when GET_DATA =>
                 sending_data <= "ZZZZZZZ" & data_ram(to_integer(unsigned(address)));
-                sending <= '1';
+                should_send <= '1';
                 print(DEBUG, "RAM: sending data:" & str(sending_data));
             when SET_DATA =>
                 data_ram(to_integer(unsigned(address))) := data;

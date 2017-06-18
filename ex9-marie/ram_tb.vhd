@@ -36,10 +36,12 @@ architecture behavior of ram_tb is
         wait for clk_period;
 
         conn_bus <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
+        wait for clk_period * 3 / 4;
+        assert conn_bus(8 downto 0) = "ZZZZZZZZZ" report "1. expected " & msg & ": '" & str("ZZZZZZZZZZZZZZZZ") &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+        wait for clk_period / 4;
 
         wait for clk_period * 3 /4;
-		assert conn_bus(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+		assert conn_bus(8 downto 0) = expected report "2. expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
         wait for clk_period / 4;
     end checkData;
 
