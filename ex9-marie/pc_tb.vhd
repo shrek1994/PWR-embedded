@@ -24,7 +24,7 @@ architecture behavior of pc_tb is
     constant GET_PC_CMD : std_logic_vector (3 downto 0):= "0001";
     constant SET_PC_CMD : std_logic_vector (3 downto 0):= "0010";
     constant NEXT_PC_CMD : std_logic_vector (3 downto 0):= "0011";
-    constant NULL_DATA : std_logic_vector (8 downto 0) := "000000000";
+    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
 
     procedure checkData(signal conn_bus : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
     begin
@@ -33,8 +33,9 @@ architecture behavior of pc_tb is
 
         conn_bus <= "ZZZZZZZZZZZZZZZZ";
         wait for clk_period;
+        wait for clk_period * 3 / 4;
 		assert conn_bus(4 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
-        wait for clk_period;
+        wait for clk_period / 4;
     end checkData;
 
 BEGIN

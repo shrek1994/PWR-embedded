@@ -4,6 +4,7 @@ use ieee.numeric_std.all;
 use work.txt_util.all;
 
 entity pc is
+    generic (DEBUG : boolean := true);
     Port (
         clk : in std_logic;
         bus_data : inout std_logic_vector (15 downto 0)
@@ -13,8 +14,8 @@ end pc;
 architecture Behavioral of pc is
 
     constant OWN_ID : std_logic_vector (2 downto 0) := "010";
-    constant DEBUG : boolean := true;
     signal sending : std_logic := '0';
+    signal sending_on_falling_clk : std_logic := '0';
 
     type state_type is (IDLE, CMD, RUN);
     signal current_state : state_type := IDLE;
@@ -23,6 +24,15 @@ architecture Behavioral of pc is
     type cmd_type is (NOTHING, SET, GET, NEXT_PC, RESET);
     signal current_cmd : cmd_type := NOTHING;
     signal sending_data : std_logic_vector (15 downto 0) := (others => '0');
+
+    function to_string(state: state_type) return string is
+    begin
+        case state is
+            when IDLE => return "IDLE";
+            when CMD => return "CMD";
+            when RUN => return "RUN";
+        end case;
+    end to_string;
 
     function decode_cmd(cmd : std_logic_vector(3 downto 0)) return cmd_type is
     begin
@@ -37,11 +47,20 @@ architecture Behavioral of pc is
 begin
 
 stateadvance: process(clk)
+    variable sleep : unsigned (1 downto 0) := "10";
 begin
-    if rising_edge(clk)
+    if rising_edge(clk) and sending = '0'
     then
+        if current_state /= next_state then
+            print(DEBUG, "PC: changing state to: " &  to_string(next_state));
+        end if;
+        current_state <= next_state;
+        sleep := "11";
+    end if;
+    if sending = '1' and sleep = "00"then
         current_state <= next_state;
     end if;
+    sleep := sleep - 1;
 end process;
 
 nextAddress: process(current_state, bus_data)
@@ -51,7 +70,10 @@ nextAddress: process(current_state, bus_data)
     variable command : std_logic_vector (3 downto 0);
     variable data : std_logic_vector (4 downto 0);
     variable counter : unsigned(4 downto 0) := (others => '0');
+    variable sent : unsigned(1 downto 0) := "00";
 begin
+
+        sending_on_falling_clk <= '0';
 
     case current_state is
         when IDLE =>
@@ -72,6 +94,7 @@ begin
         case current_cmd is
             when GET =>
                 print(DEBUG, "PC: GET");
+                sent := "10";
                 next_state <= RUN;
             when SET =>
                 print(DEBUG, "PC: SET");
@@ -90,22 +113,25 @@ begin
             when GET =>
                 sending <= '1';
                 sending_data <= "ZZZZZZZZZZZ" & std_logic_vector(counter);
-                print(DEBUG, "PC: sending data:" & str(sending_data));
+                print(DEBUG, "PC: set sending data:" & str(sending_data));
+                next_state <= IDLE;
             when SET =>
                 counter := unsigned(data);
                 print(DEBUG, "PC: set:" & str(data));
+                next_state <= IDLE;
             when NEXT_PC =>
                 if next_state = RUN then
                     counter := counter + 1;
                 print(DEBUG, "PC: next:" & str(std_logic_vector(counter)));
                 end if;
+                next_state <= IDLE;
             when RESET =>
                 counter := "00000";
                 print(DEBUG, "PC: reset:" & str(std_logic_vector(counter)));
+                next_state <= IDLE;
             when others =>
-                null;
+                next_state <= IDLE;
         end case;
-        next_state <= IDLE;
     when others =>
         next_state <= IDLE;
     end case;
