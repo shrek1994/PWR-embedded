@@ -37,6 +37,6 @@ dataType_pkg: dataType_pkg.vhd
 	$(GHDL) -e $@
 
 clean:
-	rm -f *.o *.vcd $(TEST_BENCH) $(OBJ) work-obj93.cf
+	rm -f *.o *.vcd $(TEST_BENCH) $(INTEGRATION_TESTS) $(OBJ) work-obj93.cf
 
 .PHONY: all clean

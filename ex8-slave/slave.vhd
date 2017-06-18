@@ -121,7 +121,7 @@ begin
 		next_s <= RUN;
 	when RUN =>
 		vstate <= "000100";
-		-- determine action based on currend_cmd state
+		-- determine action based on current_cmd state
 		case current_cmd is
 			when NOP
 				=> result_reg <= result_reg;
