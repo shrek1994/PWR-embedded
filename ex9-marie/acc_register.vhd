@@ -7,7 +7,9 @@ entity acc_register is
     generic (DEBUG : boolean := false);
     Port (
         clk : in std_logic;
-        bus_data : inout std_logic_vector (15 downto 0)
+        bus_data : inout std_logic_vector (15 downto 0);
+        acc_in : in std_logic_vector(8 downto 0);
+        acc_out : out std_logic_vector(8 downto 0)
         );
 end acc_register;
 

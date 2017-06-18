@@ -28,7 +28,9 @@ architecture behavior of ram_pc_acc_tb is
     generic (DEBUG : boolean);
         Port (
             clk : in std_logic;
-            bus_data : inout std_logic_vector (15 downto 0)
+            bus_data : inout std_logic_vector (15 downto 0);
+            acc_in : in std_logic_vector(8 downto 0);
+            acc_out : out std_logic_vector(8 downto 0)
         );
     end component;
 
@@ -38,6 +40,8 @@ architecture behavior of ram_pc_acc_tb is
     constant DEBUG : boolean := false;
 
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
+    signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
+    signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
     constant RAM_ID : std_logic_vector (2 downto 0) := "001";
     constant PC_ID : std_logic_vector (2 downto 0) := "010";
@@ -124,7 +128,9 @@ BEGIN
     uut3: acc_register generic map (DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
-        bus_data => bus_data
+        bus_data => bus_data,
+        acc_in => acc_in,
+        acc_out => acc_out
     );
 
     clk_process :process

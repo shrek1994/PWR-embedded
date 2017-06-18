@@ -1,85 +1,150 @@
 LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
--- include also the local library for 'str' call
-USE work.txt_util.ALL;
+use ieee.numeric_std.all;
+use work.txt_util.all;
+use work.dataType_pkg.all;
 
+entity ram_pc_acc_tb is
+end ram_pc_acc_tb;
 
-entity controller_tb IS
-END controller_tb;
+architecture behavior of ram_pc_acc_tb is
+    component ram is
+    generic (RAM_DATA : dataType; DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0)
+              );
+    end component;
 
-ARCHITECTURE behavior OF controller_tb IS
-    COMPONENT controller
-        port(
-            instruction:    in std_logic_vector (8 downto 0);
-            operation:  out std_logic_vector (1 downto 0);
-            value :     out std_logic_vector(4 downto 0);
-            address :     out std_logic_vector(4 downto 0);
-            save_to_ram : out std_logic;
-            save_to_pc : out std_logic;
-            save_to_acc : out std_logic;
-            next_pc    : out std_logic
+    component pc is
+    generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0)
         );
-    END COMPONENT;
+    end component;
+
+    component acc_register is
+    generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0)
+        );
+    end component;
+
+    signal clk :std_logic := '0';
+    constant clk_period :time := 10 ns;
+
+    constant DEBUG : boolean := false;
+
+    signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
+
+    constant RAM_ID : std_logic_vector (2 downto 0) := "001";
+    constant PC_ID : std_logic_vector (2 downto 0) := "010";
+    constant ACC_ID : std_logic_vector (2 downto 0) := "011";
+
+    constant OxOO_DATA : std_logic_vector (8 downto 0) := "111000111";
+    constant OxO1_DATA : std_logic_vector (8 downto 0) := "000111000";
+    constant OxO2_DATA : std_logic_vector (8 downto 0) := "010101010";
+
+    constant OxOO : std_logic_vector (8 downto 0) := "ZZZZ" & "00000";
+    constant OxO1 : std_logic_vector (8 downto 0) := "ZZZZ" & "00001";
+    constant OxO2 : std_logic_vector (8 downto 0) := "ZZZZ" & "00010";
+    constant OxO3 : std_logic_vector (8 downto 0) := "ZZZZ" & "00011";
 
 
-   --Inputs
-   signal instruction : std_logic_vector (8 downto 0) := "000000000";
+    constant GET_CMD : std_logic_vector (3 downto 0) := "0001";
+    constant SET_CMD : std_logic_vector (3 downto 0) := "0010";
+    constant NEXT_PC_CMD : std_logic_vector (3 downto 0) := "0011";
 
- 	--Outputs
-   signal operation : std_logic_vector(1 downto 0);
-   signal value : std_logic_vector(4 downto 0);
-   signal address : std_logic_vector(4 downto 0);
-   signal save_to_ram : std_logic;
-   signal save_to_pc : std_logic;
-   signal save_to_acc : std_logic;
-   signal next_pc : std_logic;
+    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
 
-   -- Clock period definitions
-   signal clk : std_logic;
-   constant clk_period : time := 10 ns;
+    procedure loadFromRamToAcc(signal bus_data : inout std_logic_vector; address : in std_logic_vector) is
+    begin
+        bus_data <= RAM_ID & GET_CMD & address;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
+        wait for clk_period;
 
-   constant NOTHING : std_logic_vector(1 downto 0) := "00";
-   constant ADD : std_logic_vector(1 downto 0) := "01";
-   constant SUBT : std_logic_vector(1 downto 0) := "10";
+        bus_data <= ACC_ID & SET_CMD & NULL_DATA;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
+        wait for clk_period;
+        wait for clk_period;
+    end loadFromRamToAcc;
+
+    procedure storeFromAccToRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector) is
+    begin
+        bus_data <= ACC_ID & GET_CMD & NULL_DATA;
+        wait for clk_period;
+        bus_data <= RAM_ID & SET_CMD & address;
+        wait for clk_period;
+        bus_data <= RAM_ID & SET_CMD & NULL_DATA;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
+    end storeFromAccToRam;
+
+    procedure checkDataInAcc(signal bus_data : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
+    begin
+        bus_data <= ACC_ID & GET_CMD & NULL_DATA;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
+        wait for clk_period;
+        wait for clk_period / 2;
+		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
+        wait for clk_period / 2;
+
+    end checkDataInAcc;
+
+    procedure checkDataInRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
+    begin
+        bus_data <= RAM_ID & GET_CMD & address;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
+        wait for clk_period;
+
+        wait for clk_period / 2;
+		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
+        wait for clk_period / 2;
+    end checkDataInRam;
 
 BEGIN
+    uut: ram generic map (RAM_DATA => (OxOO_DATA, OxO1_DATA, OxO2_DATA, others => "000000000"), DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data
+    );
 
-	-- Instantiate the Unit Under Test (UUT)
---    uut: controller PORT MAP (
---           instruction => instruction,
---           operation => operation,
---           value => value,
---           address => address,
---           save_to_ram => save_to_ram,
---           save_to_pc => save_to_pc,
---           save_to_acc => save_to_acc,
---           next_pc => next_pc
---         );
+    uut2: pc generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data
+    );
 
-   -- Clock process definitions
-   clk_process :process
-   begin
-		clk <= '0';
-		wait for clk_period/2;
-		clk <= '1';
-		wait for clk_period/2;
-   end process;
+    uut3: acc_register generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data
+    );
 
+    clk_process :process
+    begin
+        clk <= '0';
+        wait for clk_period / 2;
+        clk <= '1';
+        wait for clk_period / 2;
+    end process;
 
-   -- Stimulus process
-   stim_proc: process
-   begin
-        wait for 100 ns;
+    stim_proc: process
+    begin
 
---         instruction <= "000100001"; -- load 00001
-        wait for 1 ns;
+    print(DEBUG, "RAM_PC_ACC_TB - START !");
+    wait for 100 ns;
 
 
 
-
-        wait;
-   end process;
+    print(DEBUG, "RAM_PC_ACC_TB - DONE !");
+    wait;
+    end process;
 
 END;
-
-
