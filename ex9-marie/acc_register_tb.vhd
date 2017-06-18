@@ -8,55 +8,70 @@ end acc_register_tb;
 
 architecture behavior of acc_register_tb is
     component acc_register is
-        Port (set      : in std_logic;
-            data_in   : in  STD_LOGIC_VECTOR (4 downto 0);
-            data_out  : out STD_LOGIC_VECTOR (4 downto 0));
+    generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0)
+        );
     end component;
 
     signal clk : std_logic := '0';
-    constant clk_period :time := 20 ns;
+    constant clk_period :time := 10 ns;
 
-    signal set    : std_logic := '0';
-    signal data_in  : std_logic_vector(4 downto 0) := (others => 'Z');
-    signal data_out : std_logic_vector(4 downto 0) := (others => 'Z');
+    constant DEBUG : boolean := false;
+
+    signal bus_data : std_logic_vector(15 downto 0) := (others => 'Z');
+
+    constant ID : std_logic_vector (2 downto 0) := "011";
+    constant RESET_CMD : std_logic_vector (3 downto 0) := "1111";
+    constant GET_CMD : std_logic_vector (3 downto 0):= "0001";
+    constant SET_CMD : std_logic_vector (3 downto 0):= "0010";
+    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
+    constant DATA : std_logic_vector (8 downto 0) := "110011001";
+
+    procedure checkData(signal conn_bus : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
+    begin
+        conn_bus <= ID & GET_CMD & NULL_DATA;
+        wait for clk_period * 2;
+
+        conn_bus <= "ZZZZZZZZZZZZZZZZ";
+        wait for clk_period;
+        wait for clk_period * 3 / 4;
+		assert conn_bus(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+        wait for clk_period / 4;
+    end checkData;
 
 BEGIN
-    -- Instantiate the Unit Under Test (UUT)
-    uut: acc_register PORT MAP (
-        set => set,
-        data_in => data_in,
-        data_out => data_out
+    uut: acc_register generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data
     );
 
-    -- Clock process definitions
     clk_process :process
     begin
+        clk <= '0';
+        wait for clk_period / 2;
         clk <= '1';
-		wait for clk_period / 2;
-		clk <= '0';
         wait for clk_period / 2;
     end process;
 
-    -- Stimulus process
     stim_proc: process
-        variable expected : std_logic_vector (4 downto 0) := (others => '0');
     begin
 
     wait for 100 ns;
 
-    -- set new value
-    expected := "01001";
-    set <= '1';
-    data_in <= expected;
-    wait for clk_period;
-    set <= '0';
-    assert data_out = expected report "ERROR! expected: " & str(expected) & ", was: " & str(data_out);
+    bus_data <= ID & RESET_CMD & NULL_DATA;
+    wait for clk_period * 2;
 
-    -- should be the same value:
-    wait for clk_period * 10;
+    checkData(bus_data, "000000000", "zero after reset");
 
-    assert data_out = expected report "ERROR! expected: " & str(expected) & ", was: " & str(data_out);
+    bus_data <= ID & SET_CMD & DATA;
+    wait for clk_period * 2;
 
+    checkData(bus_data, DATA, "setted value");
+
+    report "ACC_tb - DONE!";
 
     wait;
     end process;
