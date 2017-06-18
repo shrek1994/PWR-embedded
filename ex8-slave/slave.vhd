@@ -42,10 +42,10 @@ signal next_s : state_type := IDLE;
 signal vstate : std_logic_vector(5 downto 0) := (others => '0');
 
 -- command definitions
-type cmd_type is (NOP, ADD, ID, CRC, DATA_REQ, SUB, RESET);
+type cmd_type is (NOP, ADD, ID, CRC, DATA_REQ, SUB, DATA_REQ_AFTER_TWO_PERIODS, RECEIVE_ARG_HALF_PERIOD_LATER_ADD, RESET);
 attribute enum_encoding: string;
 attribute enum_encoding of cmd_type: type is
-				"0000 0001 0010 0011 0100 0101 1111";
+				"0000 0001 0010 0011 0100 0101 0111 1001 1111";
 signal current_cmd : cmd_type := NOP;
 
 -- input buffer
@@ -54,6 +54,7 @@ signal q : std_logic_vector (7 downto 0) := (others => '0');
 -- for storing results and indicating it is to be sent to bus
 signal result_reg : std_logic_vector (7 downto 0) := (others => '0');
 signal sending : std_logic := '0';
+signal half_period : std_logic := '0';
 
 constant debug : boolean := false;
 
@@ -61,17 +62,28 @@ begin
 
 stateadvance: process(clk)
 begin
-  if rising_edge(clk)
-  then
-    q  <= conn_bus;
-    current_s <= next_s;
-  end if;
+    if half_period = '0' then
+        if rising_edge(clk)
+        then
+            q  <= conn_bus;
+            current_s <= next_s;
+        end if;
+    else
+        if falling_edge(clk)
+        then
+            print(debug, "receiving?");
+            q  <= conn_bus;
+            current_s <= next_s;
+        end if;
+        half_period <= '0';
+    end if;
 end process;
 
 
 nextstate: process(current_s,q)
   variable fourbit : std_logic_vector(3 downto 0) := "0000";
   variable tmp : std_logic_vector(7 downto 0) :=  (others => '0');
+  variable sleepTime : unsigned(1 downto 0);
 begin
 
  case current_s is
@@ -79,7 +91,7 @@ begin
 		vstate <= "000001";		-- set for debugging
 		if q = identifier and sending /= '1'
 		then
-	      next_s <= CMD;
+            next_s <= CMD;
 		else
 			next_s <= IDLE;
 		end if;
@@ -93,8 +105,15 @@ begin
 			when "0001" => current_cmd <= ADD;
 			when "0010" => current_cmd <= ID;
 			when "0011" => current_cmd <= CRC;
-			when "0101" => current_cmd <= SUB;
 			when "0100" => current_cmd <= DATA_REQ;
+			when "0101" => current_cmd <= SUB;
+			when "1001" =>
+                print(debug, "RECEIVE_ARG_HALF_PERIOD_LATER_ADD");
+                current_cmd <= RECEIVE_ARG_HALF_PERIOD_LATER_ADD;
+                sleepTime := "01";
+			when "0111" =>
+                current_cmd <= DATA_REQ_AFTER_TWO_PERIODS;
+                sleepTime := "10";
 
 			when "1111" => current_cmd <= RESET;
 			when others => current_cmd <= NOP;
@@ -106,29 +125,46 @@ begin
 		case current_cmd is
 			when NOP
 				=> result_reg <= result_reg;
+                    next_s <= IDLE;
 			when ID
 				=> result_reg <= identifier;
+                    next_s <= IDLE;
 			when DATA_REQ
 				=> sending <= '1';
+                    next_s <= IDLE;
 			--
 			-- here other commands execution
 			--
 			when RESET
                 => result_reg <= "00000000";
+                    next_s <= IDLE;
 			when ADD
                 =>
-                if debug then
-                    print( "adding: " & str(result_reg) & " + " & str(q) );
-                end if;
+                print(debug, "adding: " & str(result_reg) & " + " & str(q) );
                 result_reg <= std_logic_vector(unsigned(result_reg) + unsigned(q));
+                next_s <= IDLE;
             when CRC
                 => result_reg <= nextCRC(q, result_reg);
+                    next_s <= IDLE;
             when SUB
                 => result_reg <= std_logic_vector(unsigned(result_reg) - unsigned(q));
+                    next_s <= IDLE;
+            when DATA_REQ_AFTER_TWO_PERIODS =>
+                print(debug, "after 2 periods: " & str(std_logic_vector(sleepTime)));
+                if sleepTime = "00" then
+                        sending <= '1';
+                        next_s <= IDLE;
+                        print(debug, "sending!");
+                end if;
+                sleepTime := sleepTime - 1;
+            when RECEIVE_ARG_HALF_PERIOD_LATER_ADD =>
+                print(debug, "waiting for data");
+                current_cmd <= ADD;
+                next_s <= RUN;
 			when others
 				=> result_reg <= result_reg;
+                next_s <= IDLE;
 		end case;
-		next_s <= IDLE;
    when others =>
 		vstate <= "111111";
 		next_s <= IDLE;

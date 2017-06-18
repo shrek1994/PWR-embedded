@@ -113,6 +113,7 @@ package body txt_util is
      begin
       if active then
          print(text);
+         report(text);
       end if;
    end print;
 

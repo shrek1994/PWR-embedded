@@ -47,9 +47,11 @@ ARCHITECTURE behavior OF slave_tb IS
    constant ID_CMD          : std_logic_vector (7 downto 0) := "00100000";
    constant CRC_CMD         : std_logic_vector (7 downto 0) := "00110000";
    constant DATA_REQ_CMD    : std_logic_vector (7 downto 0) := "01000000";
-   constant SUB_CMD    : std_logic_vector (7 downto 0) := "01010000";
+   constant SUB_CMD         : std_logic_vector (7 downto 0) := "01010000";
    constant RESET_CMD       : std_logic_vector (7 downto 0) := "11110000";
    constant NULL_ARG        : std_logic_vector (7 downto 0) := "00000000";
+   constant RECEIVE_ARG_HALF_PERIOD_LATER_ADD : std_logic_vector (7 downto 0) := "10010000";
+   constant DATA_REQ_AFTER_TWO_PERIODS_CMD : std_logic_vector (7 downto 0) := "01110000";
 
     procedure performCmd(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; cmd : in std_logic_vector; arg : in std_logic_vector) is
     begin
@@ -99,7 +101,7 @@ BEGIN
         );
 
     uut3: slave
-	GENERIC MAP (identifier => ADDRESS_SLAVE_2)
+	GENERIC MAP (identifier => ADDRESS_SLAVE_3)
 	PORT MAP (
           conn_bus => conn_bus,
           clk => clk,
@@ -158,6 +160,22 @@ BEGIN
         performCmd(conn_bus, ADDRESS_SLAVE_1, SUB_CMD, "00001000");
         performCmd(conn_bus, ADDRESS_SLAVE_1, SUB_CMD, "00001000");
         checkResults(conn_bus, ADDRESS_SLAVE_1 , "01101111", "correct two sub");
+
+        -- send after 2 period:
+        performCmd(conn_bus, ADDRESS_SLAVE_2, ADD_CMD, "01010101");
+        performCmd(conn_bus, ADDRESS_SLAVE_3, ADD_CMD, "00101010");
+
+        -- req for result later
+        conn_bus <= ADDRESS_SLAVE_2;
+		wait for clk_period;
+		conn_bus <= DATA_REQ_AFTER_TWO_PERIODS_CMD;
+		wait for clk_period;
+
+		-- performCmd with arg from slave 2
+        performCmd(conn_bus, ADDRESS_SLAVE_3, RECEIVE_ARG_HALF_PERIOD_LATER_ADD, "ZZZZZZZZ");
+        wait for clk_period;
+
+        checkResults(conn_bus, ADDRESS_SLAVE_3 , "01111111", "should correct send data to next slave and sum it");
 
       wait;
    end process;
