@@ -90,6 +90,7 @@ BEGIN
     stim_proc: process
     begin
 
+    print(DEBUG, "RAM_PC_TB - START!");
     wait for 100 ns;
 
     checkDataBasedOnPc(bus_data, OxOO, "0x00");
@@ -104,9 +105,7 @@ BEGIN
 
     nextPc(bus_data);
 
-
-
-    report "RAM_PC_tb - DONE !";
+    print(DEBUG, "RAM_PC_TB - DONE!");
     wait;
     end process;
 

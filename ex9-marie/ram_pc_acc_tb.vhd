@@ -35,7 +35,7 @@ architecture behavior of ram_pc_acc_tb is
     signal clk :std_logic := '0';
     constant clk_period :time := 10 ns;
 
-    constant DEBUG : boolean := true;
+    constant DEBUG : boolean := false;
 
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
 
@@ -73,26 +73,39 @@ architecture behavior of ram_pc_acc_tb is
         wait for clk_period;
     end loadFromRamToAcc;
 
+    procedure storeFromAccToRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector) is
+    begin
+        bus_data <= ACC_ID & GET_CMD & NULL_DATA;
+        wait for clk_period;
+        bus_data <= RAM_ID & SET_CMD & address;
+        wait for clk_period;
+        bus_data <= RAM_ID & SET_CMD & NULL_DATA;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
+    end storeFromAccToRam;
+
     procedure checkDataInAcc(signal bus_data : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
     begin
         bus_data <= ACC_ID & GET_CMD & NULL_DATA;
         wait for clk_period;
         bus_data <= "ZZZZZZZZZZZZZZZZ";
         wait for clk_period;
+        wait for clk_period / 2;
 		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
-        wait for clk_period * 2;
+        wait for clk_period / 2;
+
     end checkDataInAcc;
 
-    procedure checkDataInRam(signal conn_bus : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
+    procedure checkDataInRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
     begin
-        conn_bus <= RAM_ID & GET_CMD & address;
+        bus_data <= RAM_ID & GET_CMD & address;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
         wait for clk_period;
 
-        conn_bus <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
-
-		assert conn_bus(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
-        wait for clk_period * 2;
+        wait for clk_period / 2;
+		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
+        wait for clk_period / 2;
     end checkDataInRam;
 
 BEGIN
@@ -125,6 +138,7 @@ BEGIN
     stim_proc: process
     begin
 
+    print(DEBUG, "RAM_PC_ACC_TB - START !");
     wait for 100 ns;
 
     -- load from ram to acc
@@ -135,16 +149,10 @@ BEGIN
     -- store from acc to ram
 
     loadFromRamToAcc(bus_data, OxO2);
+    storeFromAccToRam(bus_data, OxO3);
+    checkDataInRam(bus_data, OxO3, OxO2_DATA, "data from acc");
 
-  --  bus_data <= ACC_ID & GET_CMD & NULL_DATA;
-    wait for clk_period;
-    -- bus_data <= RAM_ID & SET_CMD & OxO3;
-    wait for clk_period;
-   -- bus_data <= RAM_ID & SET_CMD & NULL_DATA;
-
-    --checkDataInRam(bus_data, OxO3, OxO2_DATA, "data from acc");
-
-    report "RAM_PC_ACC_tb - DONE !";
+    print(DEBUG, "RAM_PC_ACC_TB - DONE !");
     wait;
     end process;
 

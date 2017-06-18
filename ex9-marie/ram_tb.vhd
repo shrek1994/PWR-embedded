@@ -9,7 +9,7 @@ end ram_tb;
 
 architecture behavior of ram_tb is
     component ram is
-    generic (RAM_DATA : dataType);
+    generic (RAM_DATA : dataType; DEBUG : boolean);
         Port (
             clk : in std_logic;
             bus_data : inout std_logic_vector (15 downto 0)
@@ -18,6 +18,7 @@ architecture behavior of ram_tb is
 
     signal clk :std_logic := '0';
     constant clk_period :time := 10 ns;
+    constant DEBUG : boolean := false;
 
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
 
@@ -56,7 +57,7 @@ architecture behavior of ram_tb is
 
 BEGIN
     -- Instantiate the Unit Under Test (UUT)
-    uut: ram generic map (RAM_DATA => (OxOO, OxO1, OxO2, others => "000000000"))
+    uut: ram generic map (RAM_DATA => (OxOO, OxO1, OxO2, others => "000000000"), DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
         bus_data => bus_data
@@ -74,6 +75,7 @@ BEGIN
     -- Stimulus process
     stim_proc: process
     begin
+    print(DEBUG, "RAM_TB - START !");
 
     wait for 100 ns;
 
@@ -84,7 +86,7 @@ BEGIN
     setData(bus_data, "00011", NEW_DATA);
     checkData(bus_data, "00011", NEW_DATA, "new data");
 
-    report "RAM_tb - DONE !";
+    print(DEBUG, "RAM_TB - DONE !");
     wait;
     end process;
 

@@ -59,6 +59,7 @@ begin
     end if;
     if should_send = '1' and clk = '0'
     then
+        print(DEBUG, "RAM: start sending: " &  str(sending_data));
         sending <= '1';
     end if;
     if sending = '1' and sleep = "00" then
@@ -103,7 +104,9 @@ begin
                 print(DEBUG, "RAM: GET_DATA, address: " & str(address));
                 next_state <= RUN;
             when SET_DATA =>
-                address := data(4 downto 0);
+                if next_state = CMD then
+                    address := data(4 downto 0);
+                end if;
                 data := bus_data(8 downto 0);
                 print(DEBUG, "RAM: SET_DATA, address: " & str(address) & ", date: " & str(data));
                 data_ram(to_integer(unsigned(address))) := data;
@@ -116,7 +119,7 @@ begin
             when GET_DATA =>
                 sending_data <= "ZZZZZZZ" & data_ram(to_integer(unsigned(address)));
                 should_send <= '1';
-                print(DEBUG, "RAM: sending data:" & str(sending_data));
+                print(DEBUG, "RAM: set sending data:" & str(sending_data));
             when SET_DATA =>
                 data_ram(to_integer(unsigned(address))) := data;
             when others =>

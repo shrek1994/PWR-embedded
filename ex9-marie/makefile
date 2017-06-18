@@ -15,7 +15,7 @@ OBJ := $(TEST_BENCH:_tb=)
 STOP_TIME := 1ms
 
 all: $(TEST_BENCH) $(INTEGRATION_TESTS)
-	#@echo "napisac SPRAWKO !!!"
+	@#@echo "napisac SPRAWKO !!!"
 
 ram_pc_tb: % : %.vhd ram pc
 	$(GHDL) -a $@.vhd

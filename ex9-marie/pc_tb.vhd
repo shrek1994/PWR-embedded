@@ -8,6 +8,7 @@ end pc_tb;
 
 architecture behavior of pc_tb is
     component pc is
+    generic (DEBUG : boolean);
         Port (
             clk : in std_logic;
             bus_data : inout std_logic_vector (15 downto 0)
@@ -16,6 +17,7 @@ architecture behavior of pc_tb is
 
     signal clk : std_logic := '0';
     constant clk_period :time := 10 ns;
+    constant DEBUG : boolean := false;
 
     signal bus_data : std_logic_vector(15 downto 0) := (others => 'Z');
 
@@ -40,7 +42,8 @@ architecture behavior of pc_tb is
 
 BEGIN
     -- Instantiate the Unit Under Test (UUT)
-    uut: pc PORT MAP (
+    uut: pc generic map (DEBUG => DEBUG)
+    PORT MAP (
         clk => clk,
         bus_data => bus_data
     );
@@ -57,6 +60,8 @@ BEGIN
     -- Stimulus process
     stim_proc: process
     begin
+
+    print(DEBUG, "PC_TB - START!");
 
     wait for 100 ns;
 
@@ -80,7 +85,7 @@ BEGIN
     checkData(bus_data, "00101", "next after set value");
 
 
-    report "PC_tb - DONE!";
+    print(DEBUG, "PC_TB - DONE!");
 
     wait;
     end process;

@@ -40,7 +40,7 @@ architecture behavior of acc_register_tb is
         wait for clk_period / 4;
 
         wait for clk_period * 3 / 4;
-		assert conn_bus(8 downto 0) = expected report "2. expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+        assert conn_bus(8 downto 0) = expected report "2. expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
         wait for clk_period / 4;
 
         wait for clk_period;
@@ -64,6 +64,7 @@ BEGIN
     stim_proc: process
     begin
 
+    print(DEBUG, "ACC_TB - START!");
     wait for 100 ns;
 
     bus_data <= ID & RESET_CMD & NULL_DATA;
@@ -80,7 +81,7 @@ BEGIN
 
     checkData(bus_data, DATA, "setted value");
 
-    report "ACC_tb - DONE!";
+    print(DEBUG, "ACC_TB - DONE!");
 
     wait;
     end process;
