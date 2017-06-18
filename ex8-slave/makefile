@@ -1,28 +1,29 @@
+GHDL := ghdl
+TEST_BENCH := \
+	slave_tb
 
+OBJ := $(TEST_BENCH:_tb=)
+STOP_TIME := 1ms
 
-slave_tb: slave_tb.vhd slave vhdl_txt pack
+all: $(TEST_BENCH)
 	@echo "napisac SPRAWKO !!!"
-	ghdl -a $@.vhd
-	ghdl -e $@
-	ghdl -r $@ --vcd=$@.vcd --stop-time=1ms
 
-%_tb: %_tb.vhd %
-	ghdl -a $@.vhd
-	ghdl -e $@
-	ghdl -r $@ --vcd=$@.vcd --stop-time=1ms
+$(TEST_BENCH): %_tb : % %.vhd
+	$(GHDL) -a $@.vhd
+	$(GHDL) -e $@
+	$(GHDL) -r $@ --vcd=$@.vcd --stop-time=$(STOP_TIME)
 
 vhdl_txt: vhdl_txt.vhd
-	ghdl -a $@.vhd
+	$(GHDL) -a $@.vhd
 
 pack: pack.vhd
 	ghdl -a $@.vhd
 
 %: %.vhd vhdl_txt pack
-	ghdl -a $@.vhd
-	ghdl -e $@
-
+	$(GHDL) -a $@.vhd
+	$(GHDL) -e $@
 
 clean:
-	rm -f *.o *.vcd slave slave_tb work-obj93.cf
+	rm -f *.o *.vcd $(TEST_BENCH) $(OBJ) work-obj93.cf
 
-.PHONY: slave_tb
+.PHONY: all clean
