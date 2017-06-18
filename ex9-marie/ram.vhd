@@ -6,41 +6,107 @@ use work.txt_util.all;
 
 
 entity ram is
-    generic (RAM_DATA : dataType := (others => "000000000"));
-    Port (address   : in  STD_LOGIC_VECTOR (4 downto 0);
-          save      : in std_logic;
-          ram_in   : in  STD_LOGIC_VECTOR (8 downto 0);
-          ram_out  : out STD_LOGIC_VECTOR (8 downto 0));
+    generic (RAM_DATA : dataType := (others => "000000000"); DEBUG : boolean := false);
+    Port (
+        clk : in std_logic;
+        bus_data : inout std_logic_vector (15 downto 0)
+        );
 end ram;
 
 architecture Behavioral of ram is
---     signal data : dataType := RAM_DATA;
-    constant debug : boolean := true;
+    constant OWN_ID : std_logic_vector (2 downto 0) := "001";
+    signal next_state_on_rising_edge : std_logic := '1';
+    signal sending : std_logic := '0';
+
+    type state_type is (IDLE, CMD, RUN);
+    signal current_state : state_type := IDLE;
+    signal next_state : state_type := IDLE;
+
+    type cmd_type is (NOTHING, SET_DATA, GET_DATA);
+    signal current_cmd : cmd_type := NOTHING;
+    signal sending_data : std_logic_vector (15 downto 0) := (others => '0');
+
+    function decode_cmd(cmd : std_logic_vector(3 downto 0)) return cmd_type is
+    begin
+        case cmd is
+            when "0001" => return GET_DATA;
+            when "0010" => return SET_DATA;
+            when others => return NOTHING;
+        end case;
+    end decode_cmd;
 begin
 
-nextAddress: process(address, save)
+stateadvance: process(clk)
+begin
+    if rising_edge(clk)
+    then
+        current_state <= next_state;
+    end if;
+end process;
+
+nextAddress: process(current_state, bus_data)
     variable data_ram : dataType;
     variable init : boolean := true;
+    variable current_cmd : cmd_type;
+    variable id : std_logic_vector (2 downto 0);
+    variable command : std_logic_vector (3 downto 0);
+    variable data : std_logic_vector (8 downto 0);
+    variable address : std_logic_vector(4 downto 0);
 begin
     if init then
         data_ram := RAM_DATA;
         init := false;
     end if;
 
-    if save = '1' then
-        print(debug, "RAM: address: " & str(address) & ", saving: " & str(ram_in));
-        data_ram(to_integer(unsigned(address))) := ram_in;
-        print(debug, "RAM: saved: " & str(data_ram(to_integer(unsigned(address)))));
-        ram_out <= "ZZZZZZZZZ";
-    else
-        if address = "UUUUU" or address = "ZZZZZ" then
-            null;
-        else
-            ram_out <= data_ram(to_integer(unsigned(address)));
-            print(debug, "RAM: address: " & str(address) & ", sending: " & str(data_ram(to_integer(unsigned(address)))));
-        end if;
-    end if;
+    case current_state is
+        when IDLE =>
+            sending <= '0';
+            id := bus_data(15 downto 13);
+            command := bus_data(12 downto 9);
+            data := bus_data(8 downto 0);
+            if id = OWN_ID and sending /= '1'
+            then
+                print(DEBUG, "RAM: receive command: " & str(command) & ", with data:" & str(data));
+                next_state <= CMD;
+                current_cmd := decode_cmd(command);
+            else
+                next_state <= IDLE;
+            end if;
+        sending <= '0';
+    when CMD =>
+        case current_cmd is
+            when GET_DATA =>
+                address := data(4 downto 0);
+                print(DEBUG, "RAM: GET_DATA, address: " & str(address));
+                next_state <= RUN;
+            when SET_DATA =>
+                address := data(4 downto 0);
+                data := bus_data(8 downto 0);
+                print(DEBUG, "RAM: SET_DATA, address: " & str(address) & ", date: " & str(data));
+                data_ram(to_integer(unsigned(address))) := data;
+                next_state <= IDLE;
+            when others =>
+                next_state <= IDLE;
+        end case;
+    when RUN =>
+        case current_cmd is
+            when GET_DATA =>
+                sending_data <= "0000000" & data_ram(to_integer(unsigned(address)));
+                sending <= '1';
+                print(DEBUG, "RAM: sending data:" & str(sending_data));
+            when SET_DATA =>
+                data_ram(to_integer(unsigned(address))) := data;
+            when others =>
+                null;
+        end case;
+        next_state <= IDLE;
+    when others =>
+        next_state <= IDLE;
+    end case;
+
 end process;
+
+bus_data <= sending_data when sending = '1' else "ZZZZZZZZZZZZZZZZ";
 
 
 end Behavioral;

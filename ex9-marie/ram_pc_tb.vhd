@@ -4,10 +4,10 @@ use ieee.numeric_std.all;
 use work.txt_util.all;
 use work.dataType_pkg.all;
 
-entity ram_tb is
-end ram_tb;
+entity ram_pc_tb is
+end ram_pc_tb;
 
-architecture behavior of ram_tb is
+architecture behavior of ram_pc_tb is
     component ram is
     generic (RAM_DATA : dataType);
         Port (
@@ -16,19 +16,26 @@ architecture behavior of ram_tb is
               );
     end component;
 
+    component pc is
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0)
+        );
+    end component;
+
     signal clk :std_logic := '0';
     constant clk_period :time := 10 ns;
 
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
 
     constant RAM_ID : std_logic_vector (2 downto 0) := "001";
+    constant PC_ID : std_logic_vector (2 downto 0) := "010";
     constant OxOO : std_logic_vector (8 downto 0) := "111000111";
     constant OxO1 : std_logic_vector (8 downto 0) := "000111000";
     constant OxO2 : std_logic_vector (8 downto 0) := "010101010";
     constant NEW_DATA : std_logic_vector (8 downto 0) := "101010101";
     constant GET_CMD : std_logic_vector (3 downto 0) := "0001";
     constant SET_CMD : std_logic_vector (3 downto 0) := "0010";
-
 
     procedure checkData(signal conn_bus : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
     begin
@@ -60,6 +67,12 @@ BEGIN
         bus_data => bus_data
     );
 
+    -- Instantiate the Unit Under Test (UUT)
+    uut2: pc PORT MAP (
+        clk => clk,
+        bus_data => bus_data
+    );
+
     -- Clock process definitions
     clk_process :process
     begin
@@ -75,14 +88,9 @@ BEGIN
 
     wait for 100 ns;
 
-    checkData(bus_data, "00000", OxOO, "0x00");
-    checkData(bus_data, "00001", OxO1, "0x01");
-    checkData(bus_data, "00010", OxO2, "0x02");
 
-    setData(bus_data, "00011", NEW_DATA);
-    checkData(bus_data, "00011", NEW_DATA, "new data");
 
-    report "RAM_tb - DONE !";
+    report "RAM_PC_tb - DONE !";
     wait;
     end process;
 
