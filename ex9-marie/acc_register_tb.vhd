@@ -18,7 +18,7 @@ architecture behavior of acc_register_tb is
     signal clk : std_logic := '0';
     constant clk_period :time := 10 ns;
 
-    constant DEBUG : boolean := false;
+    constant DEBUG : boolean := true;
 
     signal bus_data : std_logic_vector(15 downto 0) := (others => 'Z');
 
@@ -35,10 +35,15 @@ architecture behavior of acc_register_tb is
         wait for clk_period * 2;
 
         conn_bus <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
         wait for clk_period * 3 / 4;
-		assert conn_bus(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+        assert conn_bus(8 downto 0) = "ZZZZZZZZZ" report "1. expected " & msg & ": '" & str("ZZZZZZZZZ") &"' on conn_bus -- got: '" & str(conn_bus) & "'";
         wait for clk_period / 4;
+
+        wait for clk_period * 3 / 4;
+		assert conn_bus(8 downto 0) = expected report "2. expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+        wait for clk_period / 4;
+
+        wait for clk_period;
     end checkData;
 
 BEGIN
@@ -62,12 +67,16 @@ BEGIN
     wait for 100 ns;
 
     bus_data <= ID & RESET_CMD & NULL_DATA;
-    wait for clk_period * 2;
+    wait for clk_period;
+    bus_data <= "ZZZZZZZZZZZZZZZZ";
+    wait for clk_period;
 
     checkData(bus_data, "000000000", "zero after reset");
 
     bus_data <= ID & SET_CMD & DATA;
-    wait for clk_period * 2;
+    wait for clk_period;
+    bus_data <= "ZZZZZZZZZZZZZZZZ";
+    wait for clk_period;
 
     checkData(bus_data, DATA, "setted value");
 

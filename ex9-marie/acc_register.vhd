@@ -15,6 +15,7 @@ architecture Behavioral of acc_register is
 
     constant OWN_ID : std_logic_vector (2 downto 0) := "011";
     signal sending : std_logic := '0';
+    signal should_send : std_logic := '0';
 
     type state_type is (IDLE, CMD, RUN);
     signal current_state : state_type := IDLE;
@@ -57,8 +58,13 @@ begin
         current_state <= next_state;
         sleep := "11";
     end if;
-    if sending = '1' and sleep = "00"then
+    if should_send = '1' and clk = '0'
+    then
+        sending <= '1';
+    end if;
+    if sending = '1' and sleep = "00" then
         current_state <= next_state;
+        sending <= '0';
     end if;
     sleep := sleep - 1;
 end process;
@@ -73,7 +79,7 @@ nextAddress: process(current_state, bus_data)
 begin
     case current_state is
         when IDLE =>
-            sending <= '0';
+            should_send <= '0';
             id := bus_data(15 downto 13);
             command := bus_data(12 downto 9);
             data := bus_data(8 downto 0);
@@ -85,7 +91,6 @@ begin
             else
                 next_state <= IDLE;
             end if;
-        sending <= '0';
     when CMD =>
         case current_cmd is
             when GET =>
@@ -104,7 +109,7 @@ begin
     when RUN =>
         case current_cmd is
             when GET =>
-                sending <= '1';
+                should_send <= '1';
                 sending_data <= "ZZZZZZZ" & reg;
                 print(DEBUG, "ACC: set sending data:" & str(sending_data));
                 next_state <= IDLE;

@@ -96,7 +96,6 @@ begin
             else
                 next_state <= IDLE;
             end if;
---         sending <= '0';
     when CMD =>
         case current_cmd is
             when GET_DATA =>
