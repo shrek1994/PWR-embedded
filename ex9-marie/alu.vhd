@@ -8,8 +8,8 @@ entity alu is
     Port (
         clk : in std_logic;
         bus_data : in std_logic_vector (15 downto 0);
-        acc_in : in std_logic_vector(8 downto 0);
-        acc_out : out std_logic_vector(8 downto 0)
+        acc_in : out std_logic_vector(8 downto 0);
+        acc_out : in std_logic_vector(8 downto 0)
         );
 end alu;
 
@@ -86,12 +86,12 @@ begin
     when RUN =>
         case current_cmd is
             when ADD =>
-                result <= std_logic_vector(unsigned(acc_in) + unsigned(data));
-                print(DEBUG, "ALU: adding: " & str(acc_in) & "+" & str(data) & "=" & str(result));
+                result <= std_logic_vector(unsigned(acc_out) + unsigned(data));
+                print(DEBUG, "ALU: adding: " & str(acc_out) & "+" & str(data) & "=" & str(result));
                 next_state <= SEND;
             when SUBT =>
-                result <= std_logic_vector(unsigned(acc_in) - unsigned(data));
-                print(DEBUG, "ALU: adding: " & str(acc_in) & "-" & str(data) & "=" & str(result));
+                result <= std_logic_vector(unsigned(acc_out) - unsigned(data));
+                print(DEBUG, "ALU: adding: " & str(acc_out) & "-" & str(data) & "=" & str(result));
                 next_state <= SEND;
             when others =>
                 next_state <= IDLE;
@@ -111,6 +111,6 @@ begin
     end case;
 end process;
 
-acc_out <= result when calculated = '1' else "ZZZZZZZZZ";
+acc_in <= result when calculated = '1' else "ZZZZZZZZZ";
 
 end Behavioral;

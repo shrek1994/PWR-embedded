@@ -71,7 +71,7 @@ begin
     sleep := sleep - 1;
 end process;
 
-nextAddress: process(current_state, bus_data)
+nextAddress: process(current_state, bus_data, acc_in)
     variable init : boolean := true;
     variable current_cmd : cmd_type;
     variable id : std_logic_vector (2 downto 0);
@@ -79,6 +79,11 @@ nextAddress: process(current_state, bus_data)
     variable data : std_logic_vector (8 downto 0);
     variable sent : unsigned(1 downto 0) := "00";
 begin
+    if acc_in'event then
+        if acc_in /= "ZZZZZZZZZ" then
+            reg <= acc_in;
+        end if;
+    else
     case current_state is
         when IDLE =>
             should_send <= '0';
@@ -129,11 +134,12 @@ begin
     when others =>
         next_state <= IDLE;
     end case;
+    end if;
 
 end process;
 
 bus_data <= sending_data when sending = '1' else "ZZZZZZZZZZZZZZZZ";
-
+acc_out <= reg;
 
 
 end Behavioral;

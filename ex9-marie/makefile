@@ -9,13 +9,19 @@ TEST_BENCH := \
 
 INTEGRATION_TESTS := \
 	ram_pc_tb \
-	ram_pc_acc_tb
+	ram_pc_acc_tb \
+	alu_acc_tb
 
 OBJ := $(TEST_BENCH:_tb=)
 STOP_TIME := 1ms
 
 all: $(TEST_BENCH) $(INTEGRATION_TESTS)
 	@#@echo "napisac SPRAWKO !!!"
+
+alu_acc_tb: % : %.vhd alu acc_register
+	$(GHDL) -a $@.vhd
+	$(GHDL) -e $@
+	$(GHDL) -r $@ --vcd=$@.vcd --stop-time=$(STOP_TIME)
 
 ram_pc_tb: % : %.vhd ram pc
 	$(GHDL) -a $@.vhd
