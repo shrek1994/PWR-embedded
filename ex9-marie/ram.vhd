@@ -26,6 +26,15 @@ architecture Behavioral of ram is
     signal current_cmd : cmd_type := NOTHING;
     signal sending_data : std_logic_vector (15 downto 0) := (others => '0');
 
+    function to_string(state: state_type) return string is
+    begin
+        case state is
+            when IDLE => return "IDLE";
+            when CMD => return "CMD";
+            when RUN => return "RUN";
+        end case;
+    end to_string;
+
     function decode_cmd(cmd : std_logic_vector(3 downto 0)) return cmd_type is
     begin
         case cmd is
@@ -37,11 +46,20 @@ architecture Behavioral of ram is
 begin
 
 stateadvance: process(clk)
+    variable sleep : unsigned(1 downto 0) := "00";
 begin
-    if rising_edge(clk)
+    if rising_edge(clk) and sending = '0'
     then
+        if current_state /= next_state then
+            print(DEBUG, "RAM: changing state to: " &  to_string(next_state));
+        end if;
+        current_state <= next_state;
+        sleep := "11";
+    end if;
+    if sending = '1' and sleep = "00"then
         current_state <= next_state;
     end if;
+    sleep := sleep - 1;
 end process;
 
 nextAddress: process(current_state, bus_data)
@@ -91,7 +109,7 @@ begin
     when RUN =>
         case current_cmd is
             when GET_DATA =>
-                sending_data <= "0000000" & data_ram(to_integer(unsigned(address)));
+                sending_data <= "ZZZZZZZ" & data_ram(to_integer(unsigned(address)));
                 sending <= '1';
                 print(DEBUG, "RAM: sending data:" & str(sending_data));
             when SET_DATA =>

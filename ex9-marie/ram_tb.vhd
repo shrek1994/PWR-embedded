@@ -38,9 +38,9 @@ architecture behavior of ram_tb is
         conn_bus <= "ZZZZZZZZZZZZZZZZ";
         wait for clk_period;
 
-        wait for clk_period / 2;
+        wait for clk_period * 3 /4;
 		assert conn_bus(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
-        wait for clk_period / 2;
+        wait for clk_period / 4;
     end checkData;
 
     procedure setData(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; data : in std_logic_vector) is
