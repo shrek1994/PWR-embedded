@@ -45,13 +45,17 @@ architecture behavior of ram_pc_tb is
     procedure checkDataBasedOnPc(signal bus_data : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
     begin
         bus_data <= PC_ID & GET_CMD & NULL_DATA;
-        wait for clk_period * 2;
+        wait for clk_period;
+        bus_data <= "ZZZZZZZZZZZZZZZZ";
+        wait for clk_period;
         bus_data <= RAM_ID & GET_CMD & NULL_DATA;
         wait for clk_period;
         bus_data <= "ZZZZZZZZZZZZZZZZ";
         wait for clk_period;
-        assert bus_data(8 downto 0) = expected report "ERROR! expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(bus_data) & "'";
-        wait for clk_period;
+
+        wait for clk_period / 2;
+        assert bus_data(8 downto 0) = expected report "ERROR! expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
+        wait for clk_period / 2;
     end checkDataBasedOnPc;
 
     procedure nextPc(signal bus_data : inout std_logic_vector) is

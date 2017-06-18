@@ -18,7 +18,7 @@ architecture behavior of acc_register_tb is
     signal clk : std_logic := '0';
     constant clk_period :time := 10 ns;
 
-    constant DEBUG : boolean := true;
+    constant DEBUG : boolean := false;
 
     signal bus_data : std_logic_vector(15 downto 0) := (others => 'Z');
 
