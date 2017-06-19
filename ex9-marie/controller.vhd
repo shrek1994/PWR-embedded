@@ -19,7 +19,7 @@ entity controller is
 end controller;
 
 architecture Flow of controller is
-    type state is (FETCH, DECODE, EXECUTE, STORE, HALT);
+    type state is (FETCH, DECODE, EXECUTE, EXECUTE_2, STORE, HALT);
     signal current_state : state := HALT;
     signal next_state : state := FETCH;
 
@@ -49,6 +49,9 @@ begin
     if falling_edge(clk) then
         send_bus <= '0';
         send_out <= '0';
+        if current_state /= next_state then
+            print(DEBUG, "CTRL: changing state");
+        end if;
         current_state <= next_state;
 
         case current_state is
@@ -109,17 +112,39 @@ begin
                 end case;
                 next_state <= EXECUTE;
             when EXECUTE =>
-                print(DEBUG, "CTRL: EXECUTE: instruction: " & str(current_cmd));
+                print(DEBUG, "CTRL: ------------------------- EXECUTE ------------------------ instruction: " & str(current_cmd));
                 case current_cmd is
                     when LOAD =>
                         print(DEBUG, "CTRL: load: " & str(argument_bits));
---                         bus_data <= RAM_ID & GET_CMD & argument_bits;
-                        print(DEBUG, "CTRL: load2: " & str(argument_bits));
-                            next_state <= STORE;
+
+                        send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" &argument_bits;
+                        send_bus <= '1';
+                        next_state <= STORE;
+
+                    when STORE =>
+                        print(DEBUG, "CTRL: store: " & str(argument_bits));
+
+                        send_bus_data <= ACC_ID & GET_CMD & NULL_DATA;
+                        send_bus <= '1';
+
+                        next_state <= EXECUTE_2;
                     when OUTPUT =>
                             print(DEBUG, "CTRL: sending: " & str(acc_out));
                             send_out <= '1';
                             next_state <= FETCH;
+                    when others =>
+                        next_state <= HALT;
+                end case;
+            when EXECUTE_2 =>
+                print(DEBUG, "CTRL: EXECUTE_2: instruction: " & str(current_cmd));
+                case current_cmd is
+                    when STORE =>
+                        print(DEBUG, "CTRL: store into: " & str(argument_bits));
+
+                        send_bus_data <= RAM_ID & SET_CMD & "ZZZZ" & argument_bits;
+                        send_bus <= '1';
+
+                        next_state <= STORE;
                     when others =>
                         next_state <= HALT;
                 end case;
@@ -128,8 +153,13 @@ begin
                 next_state <= FETCH;
                 case current_cmd is
                     when LOAD =>
-                        print(DEBUG, "CTRL: load: " & str(argument_bits));
---                         bus_data <= ACC_ID & SET_CMD & NULL_DATA;
+                        send_bus_data <= ACC_ID & SET_CMD & NULL_DATA;
+                        send_bus <= '1';
+                        next_state <= FETCH;
+                    when STORE =>
+                        send_bus_data <= RAM_ID & SET_CMD & NULL_DATA;
+                        send_bus <= '1';
+                        next_state <= FETCH;
                     when OUTPUT =>
                         null;
                     when others =>

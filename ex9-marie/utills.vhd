@@ -35,6 +35,7 @@ package utills is
     constant OxO1 : std_logic_vector (8 downto 0) := "ZZZZ" & "00001";
     constant OxO2 : std_logic_vector (8 downto 0) := "ZZZZ" & "00010";
     constant OxO3 : std_logic_vector (8 downto 0) := "ZZZZ" & "00011";
+    constant OxO4 : std_logic_vector (8 downto 0) := "ZZZZ" & "00100";
 
     constant Ox1A : std_logic_vector (8 downto 0) := "ZZZZ" & "11010";
     constant Ox1B : std_logic_vector (8 downto 0) := "ZZZZ" & "11011";

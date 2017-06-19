@@ -70,14 +70,14 @@ architecture behavior of controller_tb is
 
     constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
 
-    constant Ox1F_DATA : std_logic_vector (8 downto 0) := "000111000";
+    constant Ox1F_DATA : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
 
 BEGIN
     uut: ram generic map (RAM_DATA => (OUTPUT & NULL_ARGUMENT,
                                        LOAD & Ox1F(4 downto 0),
                                        OUTPUT & NULL_ARGUMENT,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
+                                       STORE & OxO4(4 downto 0),
+                                       NULL_COMMAND, -- should store 0x1f which is output
                                        -- 5
                                        NULL_COMMAND,
                                        NULL_COMMAND,
@@ -156,18 +156,32 @@ BEGIN
     print(DEBUG, "CTLR_TB - START !");
 
 
+    print(DEBUG, "------------------------------------ FIRST SECENARIO (SHOW EMPTY REG) ------------------------------------");
     -- 0x00 first output - everything clear - so output is "000000000"
     wait for 95 ns;
     assert output_data = "000000000" report "expected " & ": '" & str("000000000") &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     -- 100 ns
-    print(DEBUG, "------------------------------------ NEXT SECENARIO ------------------------------------");
+    print(DEBUG, "------------------------------------ SECOND SECENARIO (LOAD FROM RAM) ------------------------------------");
 
     -- 0x02 output after load 0x1F
     wait for 195 ns;
     assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
+
+    -- 300 ns
+    print(DEBUG, "------------------------------------ THIRD SECENARIO (STORE TO RAM) ------------------------------------");
+
+    -- 0x04 output after store 0x1F with output_command
+
+    wait for 195 ns;
+    assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
+
+    -- 500 ns
+    print(DEBUG, "------------------------------------ FOURTH SECENARIO ------------------------------------");
+
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;
