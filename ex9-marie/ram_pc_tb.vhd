@@ -54,7 +54,7 @@ BEGIN
     begin
 
     print(DEBUG, "RAM_PC_TB - START!");
-    wait for 100 ns;
+    wait for STARTING_TIME;
 
     checkDataInRamBasedOnAddressFromPc(bus_data, OxOO_DATA, "0x00");
     nextPc(bus_data);

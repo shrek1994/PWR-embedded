@@ -2,6 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 use ieee.numeric_std.all;
 use work.txt_util.all;
+use work.utills.all;
 
 entity pc_tb is
 end pc_tb;
@@ -14,31 +15,10 @@ architecture behavior of pc_tb is
             bus_data : inout std_logic_vector (15 downto 0)
         );
     end component;
-
-    signal clk : std_logic := '0';
-    constant clk_period :time := 10 ns;
     constant DEBUG : boolean := false;
 
+    signal clk : std_logic := '0';
     signal bus_data : std_logic_vector(15 downto 0) := (others => 'Z');
-
-    constant ID : std_logic_vector (2 downto 0) := "010";
-    constant RESET_CMD : std_logic_vector (3 downto 0) := "1111";
-    constant GET_PC_CMD : std_logic_vector (3 downto 0):= "0001";
-    constant SET_PC_CMD : std_logic_vector (3 downto 0):= "0010";
-    constant NEXT_PC_CMD : std_logic_vector (3 downto 0):= "0011";
-    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
-
-    procedure checkData(signal conn_bus : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
-    begin
-        conn_bus <= ID & GET_PC_CMD & NULL_DATA;
-        wait for clk_period * 2;
-
-        conn_bus <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
-        wait for clk_period * 3 / 4;
-		assert conn_bus(4 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
-        wait for clk_period / 4;
-    end checkData;
 
 BEGIN
     uut: pc generic map (DEBUG => DEBUG)
@@ -59,28 +39,19 @@ BEGIN
     begin
 
     print(DEBUG, "PC_TB - START!");
+    wait for STARTING_TIME;
 
-    wait for 100 ns;
+    resetPc(bus_data);
+    checkDataInPc(bus_data, "00000", "zero after reset");
 
-    bus_data <= ID & RESET_CMD & NULL_DATA;
-    wait for clk_period * 2;
+    nextPc(bus_data);
+    checkDataInPc(bus_data, "00001", "one after next pc");
 
-    checkData(bus_data, "00000", "zero after reset");
+    setPc(bus_data, "00100");
+    checkDataInPc(bus_data, "00100", "set value");
 
-    bus_data <= ID & NEXT_PC_CMD & NULL_DATA;
-    wait for clk_period * 2;
-
-    checkData(bus_data, "00001", "one after next pc");
-
-    bus_data <= ID & SET_PC_CMD & "0000" & "00100";
-    wait for clk_period * 2;
-
-    checkData(bus_data, "00100", "set value");
-
-    bus_data <= ID & NEXT_PC_CMD & NULL_DATA;
-    wait for clk_period * 2;
-    checkData(bus_data, "00101", "next after set value");
-
+    nextPc(bus_data);
+    checkDataInPc(bus_data, "00101", "next after set value");
 
     print(DEBUG, "PC_TB - DONE!");
 

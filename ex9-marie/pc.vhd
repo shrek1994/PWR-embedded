@@ -2,6 +2,7 @@ library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
 use work.txt_util.all;
+use work.utills.all;
 
 entity pc is
     generic (DEBUG : boolean := false);
@@ -13,7 +14,8 @@ end pc;
 
 architecture Behavioral of pc is
 
-    constant OWN_ID : std_logic_vector (2 downto 0) := "010";
+    constant OWN_ID : std_logic_vector (2 downto 0) := PC_ID;
+
     signal sending : std_logic := '0';
     signal sending_on_falling_clk : std_logic := '0';
 
@@ -72,8 +74,7 @@ nextAddress: process(current_state, bus_data)
     variable counter : unsigned(4 downto 0) := (others => '0');
     variable sent : unsigned(1 downto 0) := "00";
 begin
-
-        sending_on_falling_clk <= '0';
+    sending_on_falling_clk <= '0';
 
     case current_state is
         when IDLE =>

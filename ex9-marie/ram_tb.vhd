@@ -44,7 +44,7 @@ BEGIN
     begin
     print(DEBUG, "RAM_TB - START !");
 
-    wait for 100 ns;
+    wait for STARTING_TIME;
 
     checkDataInRam(bus_data, OxOO, OxOO_DATA, "0x00");
     checkDataInRam(bus_data, OxO1, OxO1_DATA, "0x01");

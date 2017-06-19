@@ -75,7 +75,7 @@ BEGIN
     begin
 
     print(DEBUG, "RAM_PC_ACC_TB - START !");
-    wait for 100 ns;
+    wait for STARTING_TIME;
 
     -- load from ram to acc
 
