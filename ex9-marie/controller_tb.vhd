@@ -48,6 +48,16 @@ architecture behavior of controller_tb is
         );
     end component;
 
+    component alu is
+        generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : in std_logic_vector (15 downto 0);
+            acc_in : out std_logic_vector(8 downto 0);
+            acc_out : in std_logic_vector(8 downto 0)
+            );
+    end component;
+
     constant DEBUG : boolean := true;
 
     signal clk : std_logic := '0';
@@ -70,6 +80,10 @@ architecture behavior of controller_tb is
 
     constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
 
+    constant Ox1D_DATA : std_logic_vector (8 downto 0) := "000010101";
+    constant Ox1E_DATA : std_logic_vector (8 downto 0) := "000001010";
+    constant SUM_1D_1E : std_logic_vector (8 downto 0) := "000011111";
+
     constant Ox1F_DATA : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
 
 BEGIN
@@ -79,11 +93,11 @@ BEGIN
                                        STORE & OxO4(4 downto 0),
                                        NULL_COMMAND, -- should store 0x1f which is output
                                        -- 5
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
+                                       LOAD & Ox1D(4 downto 0),
+                                       ADD & Ox1E(4 downto 0),
+                                       OUTPUT & NULL_ARGUMENT,
+                                       SUBT & Ox1D(4 downto 0),
+                                       OUTPUT & NULL_ARGUMENT,
                                        -- 10
                                        NULL_COMMAND,
                                        NULL_COMMAND,
@@ -107,9 +121,9 @@ BEGIN
                                        NULL_COMMAND,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
-                                       NULL_COMMAND,
+                                       Ox1D_DATA,
                                        -- 30
-                                       NULL_COMMAND,
+                                       Ox1E_DATA,
                                        Ox1F_DATA
                                        ), DEBUG => DEBUG)
     PORT MAP (
@@ -142,6 +156,15 @@ BEGIN
         output_data => output_data
     );
 
+    uut5: alu generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data,
+
+        acc_in => acc_in,
+        acc_out => acc_out
+    );
+
     clk_process :process
     begin
         clk <= '0';
@@ -156,7 +179,7 @@ BEGIN
     print(DEBUG, "CTLR_TB - START !");
 
 
-    print(DEBUG, "------------------------------------ FIRST SECENARIO (SHOW EMPTY REG) ------------------------------------");
+    print(DEBUG, "------------------------------------ FIRST SECENARIO (EMPTY ACC) ------------------------------------");
     -- 0x00 first output - everything clear - so output is "000000000"
     wait for 75 ns;
     assert output_data = "000000000" report "expected " & ": '" & str("000000000") &"', got: '" & str(output_data) & "'";
@@ -180,8 +203,20 @@ BEGIN
     wait for 5 ns;
 
     -- 400 ns
-    print(DEBUG, "------------------------------------ FOURTH SECENARIO ------------------------------------");
+    print(DEBUG, "------------------------------------ FOURTH SECENARIO (ADDING) ------------------------------------");
 
+    -- 0x07 output with sum of 0x1D and 0x1Ed
+
+    wait for 245 ns;
+    assert output_data = SUM_1D_1E report "expected " & ": '" & str(SUM_1D_1E) &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
+
+    -- 650 ns
+    print(DEBUG, "------------------------------------ FIFTH SECENARIO (ADDING) ------------------------------------");
+
+    wait for 155 ns;
+    assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;
