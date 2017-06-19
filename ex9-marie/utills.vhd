@@ -36,6 +36,13 @@ package utills is
     constant OxO2 : std_logic_vector (8 downto 0) := "ZZZZ" & "00010";
     constant OxO3 : std_logic_vector (8 downto 0) := "ZZZZ" & "00011";
 
+    constant Ox1A : std_logic_vector (8 downto 0) := "ZZZZ" & "11010";
+    constant Ox1B : std_logic_vector (8 downto 0) := "ZZZZ" & "11011";
+    constant Ox1C : std_logic_vector (8 downto 0) := "ZZZZ" & "11100";
+    constant Ox1D : std_logic_vector (8 downto 0) := "ZZZZ" & "11101";
+    constant Ox1E : std_logic_vector (8 downto 0) := "ZZZZ" & "11110";
+    constant Ox1F : std_logic_vector (8 downto 0) := "ZZZZ" & "11111";
+
     constant GET_CMD     : std_logic_vector (3 downto 0) := "0001";
     constant SET_CMD     : std_logic_vector (3 downto 0) := "0010";
     constant NEXT_PC_CMD : std_logic_vector (3 downto 0) := "0011";
@@ -44,12 +51,34 @@ package utills is
     constant RESET_CMD   : std_logic_vector (3 downto 0) := "1111";
 
 
+    constant NULL_ARGUMENT : std_logic_vector (4 downto 0) := "ZZZZZ";
     constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
     constant NULL_BUS_DATA : std_logic_vector (15 downto 0) := "ZZZZZZZZZZZZZZZZ";
+
+
+    -- from controller
+    type cmd_type is (LOAD, STORE, ADD, SUBT, INPUT, OUTPUT, HALT, SKIPCOND, JUMP);
+    function str(cmd : cmd_type) return string;
 
 end package utills;
 
 package body utills is
+
+    function str(cmd : cmd_type) return string is
+    begin
+        case cmd is
+            when LOAD => return "LOAD";
+            when STORE => return "STORE";
+            when ADD => return "ADD";
+            when SUBT => return "SUBT";
+            when INPUT => return "INPUT";
+            when OUTPUT => return "OUTPUT";
+            when HALT => return "HALT";
+            when SKIPCOND => return "SKIPCOND";
+            when JUMP => return "JUMP";
+        end case;
+        return "";
+    end;
 
     procedure checkDataInRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
     begin
@@ -62,16 +91,16 @@ package body utills is
         wait for clk_period / 4;
 
         wait for clk_period * 3 /4;
-		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
+        assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
         wait for clk_period / 4;
     end checkDataInRam;
 
     procedure setDataInRam(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; data : in std_logic_vector) is
     begin
         conn_bus <= RAM_ID & SET_CMD & address;
-		wait for clk_period;
+        wait for clk_period;
         conn_bus <= RAM_ID & SET_CMD & data;
-		wait for clk_period;
+        wait for clk_period;
         conn_bus <= NULL_BUS_DATA;
     end setDataInRam;
 

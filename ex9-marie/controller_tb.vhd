@@ -14,6 +14,9 @@ architecture behavior of controller_tb is
                 clk : in std_logic;
                 bus_data : inout std_logic_vector (15 downto 0);
 
+                acc_in : out std_logic_vector(8 downto 0);
+                acc_out : in std_logic_vector(8 downto 0);
+
                 input_data : in std_logic_vector (8 downto 0);
                 output_data : out std_logic_vector (8 downto 0)
         );
@@ -45,89 +48,74 @@ architecture behavior of controller_tb is
         );
     end component;
 
+    constant DEBUG : boolean := true;
+
     signal clk : std_logic := '0';
-    constant clk_period : time := 10 ns;
-
-    constant DEBUG : boolean := false;
-
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
     signal input_data : std_logic_vector (8 downto 0) := (others => 'Z');
     signal output_data : std_logic_vector (8 downto 0) := (others => 'Z');
     signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
     signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
-    constant RAM_ID : std_logic_vector (2 downto 0) := "001";
-    constant PC_ID : std_logic_vector (2 downto 0) := "010";
-    constant ACC_ID : std_logic_vector (2 downto 0) := "011";
+    constant LOAD     : std_logic_vector (3 downto 0) := "0001";
+    constant STORE    : std_logic_vector (3 downto 0) := "0010";
+    constant ADD      : std_logic_vector (3 downto 0) := "0011";
+    constant SUBT     : std_logic_vector (3 downto 0) := "0100";
 
-    constant OxOO_DATA : std_logic_vector (8 downto 0) := "111000111";
-    constant OxO1_DATA : std_logic_vector (8 downto 0) := "000111000";
-    constant OxO2_DATA : std_logic_vector (8 downto 0) := "010101010";
+    constant INPUT    : std_logic_vector (3 downto 0) := "0101";
+    constant OUTPUT   : std_logic_vector (3 downto 0) := "0110";
+    constant HALT     : std_logic_vector (3 downto 0) := "0111";
+    constant SKIPCOND : std_logic_vector (3 downto 0) := "1000";
+    constant JUMP     : std_logic_vector (3 downto 0) := "1001";
 
-    constant OxOO : std_logic_vector (8 downto 0) := "ZZZZ" & "00000";
-    constant OxO1 : std_logic_vector (8 downto 0) := "ZZZZ" & "00001";
-    constant OxO2 : std_logic_vector (8 downto 0) := "ZZZZ" & "00010";
-    constant OxO3 : std_logic_vector (8 downto 0) := "ZZZZ" & "00011";
+    constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
 
+    constant OxOO_COMMAND : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
+    constant OxO1_COMMAND : std_logic_vector (8 downto 0) := LOAD & Ox1F(4 downto 0);
+    constant OxO2_COMMAND : std_logic_vector (8 downto 0) := "010101010";
 
-    constant GET_CMD : std_logic_vector (3 downto 0) := "0001";
-    constant SET_CMD : std_logic_vector (3 downto 0) := "0010";
-    constant NEXT_PC_CMD : std_logic_vector (3 downto 0) := "0011";
-
-    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
-    constant NOTHING : std_logic_vector (15 downto 0) := "ZZZZZZZZZZZZZZZZ";
-
-    procedure loadFromRamToAcc(signal bus_data : inout std_logic_vector; address : in std_logic_vector) is
-    begin
-        bus_data <= RAM_ID & GET_CMD & address;
-        wait for clk_period;
-        bus_data <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
-
-        bus_data <= ACC_ID & SET_CMD & NULL_DATA;
-        wait for clk_period;
-        bus_data <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
-        wait for clk_period;
-    end loadFromRamToAcc;
-
-    procedure storeFromAccToRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector) is
-    begin
-        bus_data <= ACC_ID & GET_CMD & NULL_DATA;
-        wait for clk_period;
-        bus_data <= RAM_ID & SET_CMD & address;
-        wait for clk_period;
-        bus_data <= RAM_ID & SET_CMD & NULL_DATA;
-        wait for clk_period;
-        bus_data <= "ZZZZZZZZZZZZZZZZ";
-    end storeFromAccToRam;
-
-    procedure checkDataInAcc(signal bus_data : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
-    begin
-        bus_data <= ACC_ID & GET_CMD & NULL_DATA;
-        wait for clk_period;
-        bus_data <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
-        wait for clk_period / 2;
-		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
-        wait for clk_period / 2;
-
-    end checkDataInAcc;
-
-    procedure checkDataInRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
-    begin
-        bus_data <= RAM_ID & GET_CMD & address;
-        wait for clk_period;
-        bus_data <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period;
-
-        wait for clk_period / 2;
-		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
-        wait for clk_period / 2;
-    end checkDataInRam;
+    constant Ox1F_DATA : std_logic_vector (8 downto 0) := "000111000";
 
 BEGIN
-    uut: ram generic map (RAM_DATA => (OxOO_DATA, OxO1_DATA, OxO2_DATA, others => "000000000"), DEBUG => DEBUG)
+    uut: ram generic map (RAM_DATA => (OxOO_COMMAND,
+                                       OxO1_COMMAND,
+                                       OxO2_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       -- 5
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       -- 10
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       -- 15
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       -- 20
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       -- 25
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       -- 30
+                                       NULL_COMMAND,
+                                       Ox1F_DATA
+                                       ), DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
         bus_data => bus_data
@@ -150,6 +138,10 @@ BEGIN
     PORT MAP (
         clk => clk,
         bus_data => bus_data,
+
+        acc_in => acc_in,
+        acc_out => acc_out,
+
         input_data => input_data,
         output_data => output_data
     );
@@ -166,9 +158,14 @@ BEGIN
     begin
 
     print(DEBUG, "CTLR_TB - START !");
-    wait for 100 ns;
 
 
+    -- 0x00 first output - everything clear - so output is "000000000"
+    wait for 95 ns;
+    assert output_data = "000000000" report "expected " & ": '" & str("000000000") &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
+
+    -- 100 ns
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;
