@@ -6,7 +6,7 @@ use work.txt_util.all;
 
 
 entity ram is
-    generic (RAM_DATA : data_type := (others => "000000000"); DEBUG : boolean := false);
+    generic (RAM_DATA : data_type := (others => "000000000"); DEBUG : boolean := false; VERBOSE : boolean := false);
     Port (
         clk : in std_logic;
         bus_data : inout std_logic_vector (15 downto 0)
@@ -44,6 +44,16 @@ architecture Behavioral of ram is
             when others => return NOTHING;
         end case;
     end decode_cmd;
+
+    function to_string(cmd: cmd_type) return string is
+    begin
+        case cmd is
+            when GET_DATA => return "GET_DATA";
+            when SET_DATA => return "SET_DATA";
+            when NOTHING => return "NOTHING";
+        end case;
+        return "";
+    end to_string;
 begin
 
 stateadvance: process(clk)
@@ -52,14 +62,14 @@ begin
     if rising_edge(clk) and sending = '0'
     then
         if current_state /= next_state then
-            print(DEBUG, "RAM: changing state to: " &  to_string(next_state));
+            print(VERBOSE, "RAM: changing state to: " &  to_string(next_state));
         end if;
         current_state <= next_state;
         sleep := "11";
     end if;
     if should_send = '1' and clk = '0'
     then
-        print(DEBUG, "RAM: start sending: " &  str(sending_data));
+        print(VERBOSE, "RAM: start sending: " &  str(sending_data));
         sending <= '1';
     end if;
     if sending = '1' and sleep = "00" then
@@ -91,9 +101,9 @@ begin
             data := bus_data(8 downto 0);
             if id = OWN_ID and sending /= '1'
             then
-                print(DEBUG, "RAM: receive command: " & str(command) & ", with data:" & str(data));
-                next_state <= CMD;
                 current_cmd := decode_cmd(command);
+                print(DEBUG, "RAM: receive command: " & to_string(current_cmd) & ", with data:" & str(data));
+                next_state <= CMD;
             else
                 next_state <= IDLE;
             end if;
@@ -101,7 +111,7 @@ begin
         case current_cmd is
             when GET_DATA =>
                 address := data(4 downto 0);
-                print(DEBUG, "RAM: GET_DATA, address: " & str(address));
+                print(VERBOSE, "RAM: GET_DATA, address: " & str(address));
                 next_state <= RUN;
             when SET_DATA =>
                 if next_state = CMD then
@@ -119,7 +129,7 @@ begin
             when GET_DATA =>
                 sending_data <= "ZZZZZZZ" & data_ram(to_integer(unsigned(address)));
                 should_send <= '1';
-                print(DEBUG, "RAM: set sending data:" & str(sending_data));
+                print(VERBOSE, "RAM: set sending data:" & str(sending_data));
             when SET_DATA =>
                 data_ram(to_integer(unsigned(address))) := data;
             when others =>
@@ -132,7 +142,18 @@ begin
 
 end process;
 
-bus_data <= sending_data when sending = '1' else "ZZZZZZZZZZZZZZZZ";
+startSending: process(sending)
+    variable data : std_logic_vector(15 downto 0);
+begin
+    if sending = '1' then
+        data := sending_data;
+        print(DEBUG, "RAM: starting sending: " & str(data));
+    else
+        print(DEBUG, "RAM: ending sending: " & str(data));
+    end if;
+end process;
+
+bus_data <= sending_data when sending = '1' else NULL_BUS_DATA;
 
 
 end Behavioral;

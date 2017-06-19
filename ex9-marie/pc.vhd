@@ -5,7 +5,7 @@ use work.txt_util.all;
 use work.utills.all;
 
 entity pc is
-    generic (DEBUG : boolean := false);
+    generic (DEBUG : boolean := false; VERBOSE : boolean := false);
     Port (
         clk : in std_logic;
         bus_data : inout std_logic_vector (15 downto 0)
@@ -46,6 +46,18 @@ architecture Behavioral of pc is
             when others => return NOTHING;
         end case;
     end decode_cmd;
+
+    function to_string(cmd: cmd_type) return string is
+    begin
+        case cmd is
+            when GET => return "GET";
+            when SET => return "SET";
+            when NEXT_PC => return "NEXT_PC";
+            when RESET => return "RESET";
+            when NOTHING => return "NOTHING";
+        end case;
+        return "";
+    end to_string;
 begin
 
 stateadvance: process(clk)
@@ -54,7 +66,7 @@ begin
     if rising_edge(clk) and sending = '0'
     then
         if current_state /= next_state then
-            print(DEBUG, "PC: changing state to: " &  to_string(next_state));
+            print(VERBOSE, "PC: changing state to: " &  to_string(next_state));
         end if;
         current_state <= next_state;
         sleep := "11";
@@ -84,9 +96,9 @@ begin
             data := bus_data(4 downto 0);
             if id = OWN_ID and sending /= '1'
             then
-                print(DEBUG, "PC: receive command: " & str(command));
-                next_state <= CMD;
                 current_cmd := decode_cmd(command);
+                print(DEBUG, "PC: receive command: " & to_string(current_cmd) & " with data: " & str(data));
+                next_state <= CMD;
             else
                 next_state <= IDLE;
             end if;
@@ -94,17 +106,17 @@ begin
     when CMD =>
         case current_cmd is
             when GET =>
-                print(DEBUG, "PC: GET");
+                print(VERBOSE, "PC: GET");
                 sent := "10";
                 next_state <= RUN;
             when SET =>
-                print(DEBUG, "PC: SET");
+                print(VERBOSE, "PC: SET");
                 next_state <= RUN;
             when NEXT_PC =>
-                print(DEBUG, "PC: NEXT_PC");
+                print(VERBOSE, "PC: NEXT_PC");
                 next_state <= RUN;
             when RESET =>
-                print(DEBUG, "PC: RESET");
+                print(VERBOSE, "PC: RESET");
                 next_state <= RUN;
             when others =>
                 next_state <= IDLE;
@@ -114,21 +126,21 @@ begin
             when GET =>
                 sending <= '1';
                 sending_data <= "ZZZZZZZZZZZ" & std_logic_vector(counter);
-                print(DEBUG, "PC: set sending data:" & str(sending_data));
+                print(VERBOSE, "PC: set sending data:" & str(sending_data));
                 next_state <= IDLE;
             when SET =>
                 counter := unsigned(data);
-                print(DEBUG, "PC: set:" & str(data));
+                print(VERBOSE, "PC: set:" & str(data));
                 next_state <= IDLE;
             when NEXT_PC =>
                 if next_state = RUN then
                     counter := counter + 1;
-                print(DEBUG, "PC: next:" & str(std_logic_vector(counter)));
+                print(VERBOSE, "PC: next:" & str(std_logic_vector(counter)));
                 end if;
                 next_state <= IDLE;
             when RESET =>
                 counter := "00000";
-                print(DEBUG, "PC: reset:" & str(std_logic_vector(counter)));
+                print(VERBOSE, "PC: reset:" & str(std_logic_vector(counter)));
                 next_state <= IDLE;
             when others =>
                 next_state <= IDLE;
@@ -139,8 +151,18 @@ begin
 
 end process;
 
-bus_data <= sending_data when sending = '1' else "ZZZZZZZZZZZZZZZZ";
+startSending: process(sending)
+    variable data : std_logic_vector(15 downto 0);
+begin
+    if sending = '1' then
+        data := sending_data;
+        print(DEBUG, "PC: starting sending: " & str(data));
+    else
+        print(DEBUG, "PC: ending sending: " & str(data));
+    end if;
+end process;
 
+bus_data <= sending_data when sending = '1' else NULL_BUS_DATA;
 
 
 end Behavioral;
