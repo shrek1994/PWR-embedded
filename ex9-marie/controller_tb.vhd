@@ -212,11 +212,14 @@ BEGIN
     wait for 5 ns;
 
     -- 650 ns
-    print(DEBUG, "------------------------------------ FIFTH SECENARIO (ADDING) ------------------------------------");
+    print(DEBUG, "------------------------------------ FIFTH SECENARIO (SUBT) ------------------------------------");
 
+    -- 0x07 output is sum(0x1D, 0x1E) - 0x1D = 0x1E
     wait for 155 ns;
-    assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
+    assert output_data = Ox1E_DATA report "expected " & ": '" & str(Ox1E_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
+
+    -- 810 ns
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;

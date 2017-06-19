@@ -128,6 +128,12 @@ begin
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
+                    when SUBT =>
+                        print(DEBUG, "CTRL: add: " & str(argument_bits));
+
+                        send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
+                        send_bus <= '1';
+                        next_state <= EXECUTE_2;
 
                     when OUTPUT =>
                             print(DEBUG, "CTRL: sending: " & str(acc_out));
@@ -150,6 +156,8 @@ begin
                         next_state <= STORE;
                     when ADD =>
                         next_state <= STORE;
+                    when SUBT =>
+                        next_state <= STORE;
                     when others =>
                         next_state <= HALT;
                 end case;
@@ -167,6 +175,11 @@ begin
                         next_state <= FETCH;
                     when ADD =>
                         send_bus_data <= ALU_ID & ADD_CMD & NULL_DATA;
+                        send_bus <= '1';
+
+                        next_state <= FETCH;
+                    when SUBT =>
+                        send_bus_data <= ALU_ID & SUBT_CMD & NULL_DATA;
                         send_bus <= '1';
 
                         next_state <= FETCH;
