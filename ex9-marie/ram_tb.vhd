@@ -16,48 +16,15 @@ architecture behavior of ram_tb is
               );
     end component;
 
-    signal clk :std_logic := '0';
-    constant clk_period :time := 10 ns;
     constant DEBUG : boolean := false;
 
+    signal clk :std_logic := '0';
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
 
-    constant RAM_ID : std_logic_vector (2 downto 0) := "001";
-    constant OxOO : std_logic_vector (8 downto 0) := "111000111";
-    constant OxO1 : std_logic_vector (8 downto 0) := "000111000";
-    constant OxO2 : std_logic_vector (8 downto 0) := "010101010";
     constant NEW_DATA : std_logic_vector (8 downto 0) := "101010101";
-    constant GET_CMD : std_logic_vector (3 downto 0) := "0001";
-    constant SET_CMD : std_logic_vector (3 downto 0) := "0010";
-
-
-    procedure checkData(signal conn_bus : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is
-    begin
-        conn_bus <= RAM_ID & GET_CMD & "ZZZZ" & address;
-        wait for clk_period;
-
-        conn_bus <= "ZZZZZZZZZZZZZZZZ";
-        wait for clk_period * 3 / 4;
-        assert conn_bus(8 downto 0) = "ZZZZZZZZZ" report "1. expected " & msg & ": '" & str("ZZZZZZZZZZZZZZZZ") &"' on conn_bus -- got: '" & str(conn_bus) & "'";
-        wait for clk_period / 4;
-
-        wait for clk_period * 3 /4;
-		assert conn_bus(8 downto 0) = expected report "2. expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
-        wait for clk_period / 4;
-    end checkData;
-
-    procedure setData(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; data : in std_logic_vector) is
-    begin
-        conn_bus <= RAM_ID & SET_CMD & "ZZZZ" & address;
-		wait for clk_period;
-        conn_bus <= RAM_ID & SET_CMD & data;
-		wait for clk_period;
-        conn_bus <= "ZZZZZZZZZZZZZZZZ";
-    end setData;
-
 BEGIN
     -- Instantiate the Unit Under Test (UUT)
-    uut: ram generic map (RAM_DATA => (OxOO, OxO1, OxO2, others => "000000000"), DEBUG => DEBUG)
+    uut: ram generic map (RAM_DATA => (OxOO_DATA, OxO1_DATA, OxO2_DATA, others => "000000000"), DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
         bus_data => bus_data
@@ -79,12 +46,12 @@ BEGIN
 
     wait for 100 ns;
 
-    checkData(bus_data, "00000", OxOO, "0x00");
-    checkData(bus_data, "00001", OxO1, "0x01");
-    checkData(bus_data, "00010", OxO2, "0x02");
+    checkDataInRam(bus_data, OxOO, OxOO_DATA, "0x00");
+    checkDataInRam(bus_data, OxO1, OxO1_DATA, "0x01");
+    checkDataInRam(bus_data, OxO2, OxO2_DATA, "0x02");
 
-    setData(bus_data, "00011", NEW_DATA);
-    checkData(bus_data, "00011", NEW_DATA, "new data");
+    setDataInRam(bus_data, OxO3, NEW_DATA);
+    checkDataInRam(bus_data, OxO3, NEW_DATA, "new data");
 
     print(DEBUG, "RAM_TB - DONE !");
     wait;
