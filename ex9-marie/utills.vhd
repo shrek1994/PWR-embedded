@@ -127,8 +127,11 @@ package body utills is
     begin
         bus_data <= ACC_ID & GET_CMD & NULL_DATA;
         wait for clk_period;
+
         bus_data <= NULL_BUS_DATA;
-        wait for clk_period;
+        wait for clk_period * 3 / 4;
+        assert bus_data(8 downto 0) = NULL_DATA report "BEFORE_SENDING: expected " & msg & ": '" & str(NULL_DATA) &"', got: '" & str(bus_data) & "'";
+        wait for clk_period / 4;
 
         wait for clk_period * 3 / 4;
         assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
@@ -169,7 +172,7 @@ package body utills is
         bus_data <= ACC_ID & RESET_CMD & NULL_DATA;
         wait for clk_period;
         bus_data <= NULL_BUS_DATA;
-        wait for clk_period;
+        wait for clk_period * 2;
     end resetAcc;
 
     procedure setDataInAcc(signal bus_data : inout std_logic_vector; value : std_logic_vector) is
@@ -177,7 +180,7 @@ package body utills is
         bus_data <= ACC_ID & SET_CMD & value;
         wait for clk_period;
         bus_data <= NULL_BUS_DATA;
-        wait for clk_period;
+        wait for clk_period * 2;
     end setDataInAcc;
 
 end utills;
