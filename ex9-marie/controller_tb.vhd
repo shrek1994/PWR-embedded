@@ -70,16 +70,16 @@ architecture behavior of controller_tb is
 
     constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
 
-    constant OxOO_COMMAND : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
-    constant OxO1_COMMAND : std_logic_vector (8 downto 0) := LOAD & Ox1F(4 downto 0);
-    constant OxO2_COMMAND : std_logic_vector (8 downto 0) := "010101010";
+--     constant OxOO_COMMAND : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
+--     constant OxO1_COMMAND : std_logic_vector (8 downto 0) := LOAD & Ox1F(4 downto 0);
+--     constant OxO2_COMMAND : std_logic_vector (8 downto 0) := "010101010";
 
     constant Ox1F_DATA : std_logic_vector (8 downto 0) := "000111000";
 
 BEGIN
-    uut: ram generic map (RAM_DATA => (OxOO_COMMAND,
-                                       OxO1_COMMAND,
-                                       OxO2_COMMAND,
+    uut: ram generic map (RAM_DATA => (OUTPUT & NULL_ARGUMENT,
+                                       LOAD & Ox1F(4 downto 0),
+                                       OUTPUT & NULL_ARGUMENT,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
                                        -- 5
@@ -166,6 +166,11 @@ BEGIN
     wait for 5 ns;
 
     -- 100 ns
+
+    -- 0x02 output after load 0x1F
+    wait for 95 ns;
+    assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;

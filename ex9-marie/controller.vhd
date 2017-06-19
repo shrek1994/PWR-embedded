@@ -29,7 +29,7 @@ architecture Flow of controller is
 begin
 
     nextstate: process(clk)
-        variable number_of_instruction : unsigned (2 downto 0) := "000"; -- TODO change to enum !!!
+        variable fetch_state : unsigned (2 downto 0) := "000"; -- TODO change to enum !!!
         variable instruction_bits : std_logic_vector(3 downto 0);
         variable argument_bits : std_logic_vector(4 downto 0);
     begin
@@ -37,7 +37,7 @@ begin
     if rising_edge(clk) and receive = '1' then
         instruction_bits := bus_data(8 downto 5);
         argument_bits := bus_data(4 downto 0);
-        print(DEBUG, "CTRL: receive data / command: " & str(instruction_bits) & ", " & str(argument_bits));
+        print(DEBUG, "CTRL: receive command: " & str(instruction_bits) & "-" & str(argument_bits));
     end if;
 
     if falling_edge(clk) then
@@ -48,34 +48,33 @@ begin
         case current_state is
             when FETCH =>
                 -- get instruction:
-                if number_of_instruction = "011" then
-                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+
+                print(DEBUG, "CTRL: fetch_state: " & str(std_logic_vector(fetch_state)));
+
+                if fetch_state = "011" then
                     bus_data <= PC_ID & NEXT_PC_CMD & NULL_DATA;
-                    number_of_instruction := number_of_instruction + 1;
+                    fetch_state := fetch_state + 1;
                     receive <= '1';
                     next_state <= DECODE;
                 end if;
 
-                if number_of_instruction = "010" then
-                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                if fetch_state = "010" then
                     bus_data <= RAM_ID & GET_CMD & NULL_DATA;
-                    number_of_instruction := number_of_instruction + 1;
+                    fetch_state := fetch_state + 1;
                 end if;
 
-                if number_of_instruction = "001" then
-                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                if fetch_state = "001" then
                     bus_data <= NULL_BUS_DATA;
-                    number_of_instruction := number_of_instruction + 1;
+                    fetch_state := fetch_state + 1;
                 end if;
 
-                if number_of_instruction = "000" then
-                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                if fetch_state = "000" then
                     bus_data <= PC_ID & GET_CMD & NULL_DATA;
-                    number_of_instruction := number_of_instruction + 1;
+                    fetch_state := fetch_state + 1;
                 end if;
 
             when DECODE =>
-                number_of_instruction := "000";
+                fetch_state := "000";
                 receive <= '0';
                 print(DEBUG, "CTRL: DECODE: instruction_bits: " & str(instruction_bits));
                 case instruction_bits is
@@ -104,6 +103,11 @@ begin
             when EXECUTE =>
                 print(DEBUG, "CTRL: EXECUTE: instruction: " & str(current_cmd));
                 case current_cmd is
+                    when LOAD =>
+                        print(DEBUG, "CTRL: load: " & str(argument_bits));
+--                         bus_data <= RAM_ID & GET_CMD & argument_bits;
+                        print(DEBUG, "CTRL: load2: " & str(argument_bits));
+                            next_state <= STORE;
                     when OUTPUT =>
                             print(DEBUG, "CTRL: sending: " & str(acc_out));
                             output_data <= acc_out;
@@ -112,8 +116,17 @@ begin
                         next_state <= HALT;
                 end case;
             when STORE =>
+                print(DEBUG, "CTRL: STORE: instruction: " & str(current_cmd));
                 next_state <= FETCH;
-
+                case current_cmd is
+                    when LOAD =>
+                        print(DEBUG, "CTRL: load: " & str(argument_bits));
+--                         bus_data <= ACC_ID & SET_CMD & NULL_DATA;
+                    when OUTPUT =>
+                        null;
+                    when others =>
+                        next_state <= HALT;
+                end case;
             when HALT =>
                 null;
             when others =>
