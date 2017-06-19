@@ -158,28 +158,28 @@ BEGIN
 
     print(DEBUG, "------------------------------------ FIRST SECENARIO (SHOW EMPTY REG) ------------------------------------");
     -- 0x00 first output - everything clear - so output is "000000000"
-    wait for 95 ns;
+    wait for 75 ns;
     assert output_data = "000000000" report "expected " & ": '" & str("000000000") &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
-    -- 100 ns
+    -- 80 ns
     print(DEBUG, "------------------------------------ SECOND SECENARIO (LOAD FROM RAM) ------------------------------------");
 
     -- 0x02 output after load 0x1F
-    wait for 195 ns;
+    wait for 155 ns;
     assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
-    -- 300 ns
+    -- 240 ns
     print(DEBUG, "------------------------------------ THIRD SECENARIO (STORE TO RAM) ------------------------------------");
 
     -- 0x04 output after store 0x1F with output_command
 
-    wait for 195 ns;
+    wait for 155 ns;
     assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
-    -- 500 ns
+    -- 400 ns
     print(DEBUG, "------------------------------------ FOURTH SECENARIO ------------------------------------");
 
 

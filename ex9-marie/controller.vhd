@@ -19,7 +19,7 @@ entity controller is
 end controller;
 
 architecture Flow of controller is
-    type state is (FETCH, DECODE, EXECUTE, EXECUTE_2, STORE, HALT);
+    type state is (FETCH, FETCH_2, FETCH_3, FETCH_4, FETCH_5, DECODE, EXECUTE, EXECUTE_2, STORE, HALT);
     signal current_state : state := HALT;
     signal next_state : state := FETCH;
 
@@ -32,58 +32,52 @@ architecture Flow of controller is
 
     signal send_bus : std_logic := '0';
     signal send_bus_data : std_logic_vector (15 downto 0);
+
+    signal instruction_bits : std_logic_vector(3 downto 0);
+    signal argument_bits : std_logic_vector(4 downto 0);
 begin
 
-    nextstate: process(clk)
-        variable fetch_state : unsigned (2 downto 0) := "000"; -- TODO change to enum !!!
-        variable instruction_bits : std_logic_vector(3 downto 0);
-        variable argument_bits : std_logic_vector(4 downto 0);
+    clock : process (clk)
     begin
+        if rising_edge(clk) and receive = '1' then
+            instruction_bits <= bus_data(8 downto 5);
+            argument_bits <= bus_data(4 downto 0);
+            print(DEBUG, "CTRL: receive command: " & str(instruction_bits) & "-" & str(argument_bits));
+        end if;
 
-    if rising_edge(clk) and receive = '1' then
-        instruction_bits := bus_data(8 downto 5);
-        argument_bits := bus_data(4 downto 0);
-        print(DEBUG, "CTRL: receive command: " & str(instruction_bits) & "-" & str(argument_bits));
-    end if;
+        if falling_edge(clk) then
+            if current_state /= next_state then
+                print(DEBUG, "CTRL: changing state");
+            end if;
+        current_state <= next_state;
+        end if;
+    end process;
 
-    if falling_edge(clk) then
+    nextstate: process(current_state)
+        variable fetch_state : unsigned (2 downto 0) := "000"; -- TODO change to enum !!!
+    begin
         send_bus <= '0';
         send_out <= '0';
-        if current_state /= next_state then
-            print(DEBUG, "CTRL: changing state");
-        end if;
-        current_state <= next_state;
 
         case current_state is
             when FETCH =>
-                -- get instruction:
-
-                print(DEBUG, "CTRL: fetch_state: " & str(std_logic_vector(fetch_state)));
-
-                if fetch_state = "011" then
-                    send_bus_data <= PC_ID & NEXT_PC_CMD & NULL_DATA;
-                    send_bus <= '1';
-                    fetch_state := fetch_state + 1;
-                    receive <= '1';
-                    next_state <= DECODE;
-                end if;
-
-                if fetch_state = "010" then
-                    send_bus_data <= RAM_ID & GET_CMD & NULL_DATA;
-                    send_bus <= '1';
-                    fetch_state := fetch_state + 1;
-                end if;
-
-                if fetch_state = "001" then
-                    fetch_state := fetch_state + 1;
-                end if;
-
-                if fetch_state = "000" then
-                    send_bus_data <= PC_ID & GET_CMD & NULL_DATA;
-                    send_bus <= '1';
-                    fetch_state := fetch_state + 1;
-                end if;
-
+                print(DEBUG, "CTRL: ------------------------------ Loading new command ------------------------------");
+                send_bus_data <= PC_ID & GET_CMD & NULL_DATA;
+                send_bus <= '1';
+                next_state <= FETCH_2;
+            when FETCH_2 =>
+                next_state <= FETCH_3;
+            when FETCH_3 =>
+                send_bus_data <= RAM_ID & GET_CMD & NULL_DATA;
+                send_bus <= '1';
+                next_state <= FETCH_4;
+            when FETCH_4 =>
+                send_bus_data <= PC_ID & NEXT_PC_CMD & NULL_DATA;
+                send_bus <= '1';
+                receive <= '1';
+                next_state <= FETCH_5;
+            when FETCH_5 =>
+                next_state <= DECODE;
             when DECODE =>
                 fetch_state := "000";
                 receive <= '0';
@@ -117,9 +111,9 @@ begin
                     when LOAD =>
                         print(DEBUG, "CTRL: load: " & str(argument_bits));
 
-                        send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" &argument_bits;
+                        send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
-                        next_state <= STORE;
+                        next_state <= EXECUTE_2;
 
                     when STORE =>
                         print(DEBUG, "CTRL: store: " & str(argument_bits));
@@ -138,6 +132,8 @@ begin
             when EXECUTE_2 =>
                 print(DEBUG, "CTRL: EXECUTE_2: instruction: " & str(current_cmd));
                 case current_cmd is
+                    when LOAD =>
+                        next_state <= STORE;
                     when STORE =>
                         print(DEBUG, "CTRL: store into: " & str(argument_bits));
 
@@ -170,7 +166,6 @@ begin
             when others =>
                 null;
         end case;
-    end if;
 
     end process;
 
