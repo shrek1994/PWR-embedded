@@ -29,6 +29,9 @@ architecture Flow of controller is
 
     signal send_out : std_logic := '0';
     signal send_out_data : std_logic_vector (8 downto 0);
+
+    signal send_bus : std_logic := '0';
+    signal send_bus_data : std_logic_vector (15 downto 0);
 begin
 
     nextstate: process(clk)
@@ -44,7 +47,7 @@ begin
     end if;
 
     if falling_edge(clk) then
-        bus_data <= NULL_BUS_DATA;
+        send_bus <= '0';
         send_out <= '0';
         current_state <= next_state;
 
@@ -55,24 +58,26 @@ begin
                 print(DEBUG, "CTRL: fetch_state: " & str(std_logic_vector(fetch_state)));
 
                 if fetch_state = "011" then
-                    bus_data <= PC_ID & NEXT_PC_CMD & NULL_DATA;
+                    send_bus_data <= PC_ID & NEXT_PC_CMD & NULL_DATA;
+                    send_bus <= '1';
                     fetch_state := fetch_state + 1;
                     receive <= '1';
                     next_state <= DECODE;
                 end if;
 
                 if fetch_state = "010" then
-                    bus_data <= RAM_ID & GET_CMD & NULL_DATA;
+                    send_bus_data <= RAM_ID & GET_CMD & NULL_DATA;
+                    send_bus <= '1';
                     fetch_state := fetch_state + 1;
                 end if;
 
                 if fetch_state = "001" then
-                    bus_data <= NULL_BUS_DATA;
                     fetch_state := fetch_state + 1;
                 end if;
 
                 if fetch_state = "000" then
-                    bus_data <= PC_ID & GET_CMD & NULL_DATA;
+                    send_bus_data <= PC_ID & GET_CMD & NULL_DATA;
+                    send_bus <= '1';
                     fetch_state := fetch_state + 1;
                 end if;
 
@@ -150,7 +155,19 @@ begin
         end if;
     end process;
 
+    startSendingBus: process(send_bus)
+        variable data : std_logic_vector(15 downto 0);
+    begin
+        if send_bus = '1' then
+            data := send_bus_data;
+            print(DEBUG, "CTRL: starting sending bus: " & str(data));
+        else
+            print(DEBUG, "CTRL: ending sending bus: " & str(data));
+        end if;
+    end process;
+
     output_data <= acc_out when send_out = '1' else NULL_DATA;
+    bus_data <= send_bus_data when send_bus = '1' else NULL_BUS_DATA;
 
 end Flow;
 

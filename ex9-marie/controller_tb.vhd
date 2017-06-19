@@ -165,7 +165,7 @@ BEGIN
     print(DEBUG, "------------------------------------ NEXT SECENARIO ------------------------------------");
 
     -- 0x02 output after load 0x1F
-    wait for 95 ns;
+    wait for 195 ns;
     assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
