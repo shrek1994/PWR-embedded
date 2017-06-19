@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 use ieee.numeric_std.all;
 use work.txt_util.all;
-use work.dataType_pkg.all;
+use work.utills.all;
 
 entity alu_acc_tb is
 end alu_acc_tb;

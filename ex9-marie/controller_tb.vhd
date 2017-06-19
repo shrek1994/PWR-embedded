@@ -2,7 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 use ieee.numeric_std.all;
 use work.txt_util.all;
-use work.dataType_pkg.all;
+use work.utills.all;
 
 entity controller_tb is
 end controller_tb;
@@ -20,7 +20,7 @@ architecture behavior of controller_tb is
     end component;
 
     component ram is
-    generic (RAM_DATA : dataType; DEBUG : boolean);
+    generic (RAM_DATA : data_type; DEBUG : boolean);
         Port (
             clk : in std_logic;
             bus_data : inout std_logic_vector (15 downto 0)
@@ -48,7 +48,7 @@ architecture behavior of controller_tb is
     signal clk : std_logic := '0';
     constant clk_period : time := 10 ns;
 
-    constant DEBUG : boolean := true;
+    constant DEBUG : boolean := false;
 
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
     signal input_data : std_logic_vector (8 downto 0) := (others => 'Z');

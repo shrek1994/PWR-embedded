@@ -2,14 +2,14 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 use ieee.numeric_std.all;
 use work.txt_util.all;
-use work.dataType_pkg.all;
+use work.utills.all;
 
 entity ram_tb is
 end ram_tb;
 
 architecture behavior of ram_tb is
     component ram is
-    generic (RAM_DATA : dataType; DEBUG : boolean);
+    generic (RAM_DATA : data_type; DEBUG : boolean);
         Port (
             clk : in std_logic;
             bus_data : inout std_logic_vector (15 downto 0)

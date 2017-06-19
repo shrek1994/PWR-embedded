@@ -1,12 +1,12 @@
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
 use ieee.numeric_std.all;
-use work.dataType_pkg.all;
+use work.utills.all;
 use work.txt_util.all;
 
 
 entity ram is
-    generic (RAM_DATA : dataType := (others => "000000000"); DEBUG : boolean := false);
+    generic (RAM_DATA : data_type := (others => "000000000"); DEBUG : boolean := false);
     Port (
         clk : in std_logic;
         bus_data : inout std_logic_vector (15 downto 0)
@@ -70,7 +70,7 @@ begin
 end process;
 
 nextAddress: process(current_state, bus_data)
-    variable data_ram : dataType;
+    variable data_ram : data_type;
     variable init : boolean := true;
     variable current_cmd : cmd_type;
     variable id : std_logic_vector (2 downto 0);

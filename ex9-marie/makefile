@@ -41,10 +41,10 @@ $(TEST_BENCH): %_tb : % %.vhd
 vhdl_txt: vhdl_txt.vhd
 	$(GHDL) -a $@.vhd
 
-dataType_pkg: dataType_pkg.vhd
+utills: utills.vhd
 	$(GHDL) -a $@.vhd
 
-%: %.vhd vhdl_txt dataType_pkg
+%: %.vhd vhdl_txt utills
 	$(GHDL) -a $@.vhd
 	$(GHDL) -e $@
 
