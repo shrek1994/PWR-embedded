@@ -2,6 +2,7 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 use ieee.numeric_std.all;
 use work.txt_util.all;
+use work.utills.all;
 
 entity acc_register_tb is
 end acc_register_tb;
@@ -26,29 +27,22 @@ architecture behavior of acc_register_tb is
     signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
     signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
-    constant ID : std_logic_vector (2 downto 0) := "011";
-    constant RESET_CMD : std_logic_vector (3 downto 0) := "1111";
-    constant GET_CMD : std_logic_vector (3 downto 0):= "0001";
-    constant SET_CMD : std_logic_vector (3 downto 0):= "0010";
-    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
     constant DATA : std_logic_vector (8 downto 0) := "110011001";
 
-    procedure checkData(signal conn_bus : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
+    procedure checkDataInAcc(signal bus_data : inout std_logic_vector; expected : in std_logic_vector; msg : string) is
     begin
-        conn_bus <= ID & GET_CMD & NULL_DATA;
+        bus_data <= ACC_ID & GET_CMD & NULL_DATA;
         wait for clk_period * 2;
 
-        conn_bus <= "ZZZZZZZZZZZZZZZZ";
+        bus_data <= NULL_BUS_DATA;
         wait for clk_period * 3 / 4;
-        assert conn_bus(8 downto 0) = "ZZZZZZZZZ" report "1. expected " & msg & ": '" & str("ZZZZZZZZZ") &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+        assert bus_data(8 downto 0) = NULL_DATA report "BEFORE_SENDING: expected " & msg & ": '" & str(NULL_DATA) &"', got: '" & str(bus_data) & "'";
         wait for clk_period / 4;
 
         wait for clk_period * 3 / 4;
-        assert conn_bus(8 downto 0) = expected report "2. expected " & msg & ": '" & str(expected) &"' on conn_bus -- got: '" & str(conn_bus) & "'";
+        assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
         wait for clk_period / 4;
-
-        wait for clk_period;
-    end checkData;
+    end checkDataInAcc;
 
 BEGIN
     uut: acc_register generic map (DEBUG => DEBUG)
@@ -71,21 +65,13 @@ BEGIN
     begin
 
     print(DEBUG, "ACC_TB - START!");
-    wait for 100 ns;
+    wait for STARTING_TIME;
 
-    bus_data <= ID & RESET_CMD & NULL_DATA;
-    wait for clk_period;
-    bus_data <= "ZZZZZZZZZZZZZZZZ";
-    wait for clk_period;
+    resetAcc(bus_data);
+    checkDataInAcc(bus_data, "000000000", "zero after reset");
 
-    checkData(bus_data, "000000000", "zero after reset");
-
-    bus_data <= ID & SET_CMD & DATA;
-    wait for clk_period;
-    bus_data <= "ZZZZZZZZZZZZZZZZ";
-    wait for clk_period;
-
-    checkData(bus_data, DATA, "setted value");
+    setDataInAcc(bus_data, DATA);
+    checkDataInAcc(bus_data, DATA, "setted value");
 
     print(DEBUG, "ACC_TB - DONE!");
 

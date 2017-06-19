@@ -16,6 +16,8 @@ package utills is
     procedure checkDataInPc(signal bus_data : inout std_logic_vector; expected : in std_logic_vector; msg : string);
     procedure resetPc(signal bus_data : inout std_logic_vector);
     procedure setPc(signal bus_data : inout std_logic_vector; value : in std_logic_vector);
+    procedure resetAcc(signal bus_data : inout std_logic_vector);
+    procedure setDataInAcc(signal bus_data : inout std_logic_vector; value : std_logic_vector);
 
     constant STARTING_TIME : time := 100 ns;
     constant CLK_PERIOD : time := 10 ns;
@@ -45,7 +47,6 @@ package utills is
     constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
     constant NULL_BUS_DATA : std_logic_vector (15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 
-
 end package utills;
 
 package body utills is
@@ -57,14 +58,13 @@ package body utills is
 
         bus_data <= NULL_BUS_DATA;
         wait for clk_period * 3 / 4;
-        assert bus_data(8 downto 0) = NULL_DATA report "1. expected " & msg & ": '" & str(NULL_DATA) &"', got: '" & str(bus_data) & "'";
+        assert bus_data(8 downto 0) = NULL_DATA report "BEFORE_SENDING: expected " & msg & ": '" & str(NULL_DATA) &"', got: '" & str(bus_data) & "'";
         wait for clk_period / 4;
 
         wait for clk_period * 3 /4;
-		assert bus_data(8 downto 0) = expected report "2. expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
+		assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
         wait for clk_period / 4;
     end checkDataInRam;
-
 
     procedure setDataInRam(signal conn_bus : inout std_logic_vector ; address : in std_logic_vector; data : in std_logic_vector) is
     begin
@@ -87,7 +87,7 @@ package body utills is
         wait for clk_period;
 
         wait for clk_period / 2;
-        assert bus_data(8 downto 0) = expected report "ERROR! expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
+        assert bus_data(8 downto 0) = expected report "expected " & msg & ": '" & str(expected) &"', got: '" & str(bus_data) & "'";
         wait for clk_period / 2;
     end checkDataInRamBasedOnAddressFromPc;
 
@@ -111,7 +111,6 @@ package body utills is
         bus_data <= NULL_BUS_DATA;
         wait for clk_period *2;
     end loadDataFromRamToAcc;
-
 
     procedure storeDataFromAccToRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector) is
     begin
@@ -164,5 +163,21 @@ package body utills is
         bus_data <= NULL_BUS_DATA;
         wait for clk_period * 2;
     end setPc;
+
+    procedure resetAcc(signal bus_data : inout std_logic_vector) is
+    begin
+        bus_data <= ACC_ID & RESET_CMD & NULL_DATA;
+        wait for clk_period;
+        bus_data <= NULL_BUS_DATA;
+        wait for clk_period;
+    end resetAcc;
+
+    procedure setDataInAcc(signal bus_data : inout std_logic_vector; value : std_logic_vector) is
+    begin
+        bus_data <= ACC_ID & SET_CMD & value;
+        wait for clk_period;
+        bus_data <= NULL_BUS_DATA;
+        wait for clk_period;
+    end setDataInAcc;
 
 end utills;
