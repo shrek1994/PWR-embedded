@@ -70,10 +70,6 @@ architecture behavior of controller_tb is
 
     constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
 
---     constant OxOO_COMMAND : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
---     constant OxO1_COMMAND : std_logic_vector (8 downto 0) := LOAD & Ox1F(4 downto 0);
---     constant OxO2_COMMAND : std_logic_vector (8 downto 0) := "010101010";
-
     constant Ox1F_DATA : std_logic_vector (8 downto 0) := "000111000";
 
 BEGIN
@@ -166,6 +162,7 @@ BEGIN
     wait for 5 ns;
 
     -- 100 ns
+    print(DEBUG, "------------------------------------ NEXT SECENARIO ------------------------------------");
 
     -- 0x02 output after load 0x1F
     wait for 95 ns;

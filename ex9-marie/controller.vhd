@@ -26,6 +26,9 @@ architecture Flow of controller is
     signal current_cmd : cmd_type := HALT;
 
     signal receive : std_logic := '0';
+
+    signal send_out : std_logic := '0';
+    signal send_out_data : std_logic_vector (8 downto 0);
 begin
 
     nextstate: process(clk)
@@ -42,7 +45,7 @@ begin
 
     if falling_edge(clk) then
         bus_data <= NULL_BUS_DATA;
-        output_data <= NULL_DATA;
+        send_out <= '0';
         current_state <= next_state;
 
         case current_state is
@@ -110,7 +113,7 @@ begin
                             next_state <= STORE;
                     when OUTPUT =>
                             print(DEBUG, "CTRL: sending: " & str(acc_out));
-                            output_data <= acc_out;
+                            send_out <= '1';
                             next_state <= FETCH;
                     when others =>
                         next_state <= HALT;
@@ -135,6 +138,19 @@ begin
     end if;
 
     end process;
+
+    startSendingOut: process(send_out)
+        variable data : std_logic_vector(8 downto 0);
+    begin
+        if send_out = '1' then
+            data := acc_out;
+            print(DEBUG, "CTRL: starting sending out: " & str(data));
+        else
+            print(DEBUG, "CTRL: ending sending out: " & str(data));
+        end if;
+    end process;
+
+    output_data <= acc_out when send_out = '1' else NULL_DATA;
 
 end Flow;
 
