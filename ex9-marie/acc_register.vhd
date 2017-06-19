@@ -4,7 +4,7 @@ use ieee.numeric_std.all;
 use work.txt_util.all;
 
 entity acc_register is
-    generic (DEBUG : boolean := false);
+    generic (DEBUG : boolean := false; VERBOSE : boolean := false);
     Port (
         clk : in std_logic;
         bus_data : inout std_logic_vector (15 downto 0);
@@ -47,6 +47,17 @@ architecture Behavioral of acc_register is
             when others => return NOTHING;
         end case;
     end decode_cmd;
+
+    function to_string(cmd : cmd_type) return string is
+    begin
+        case cmd is
+            when GET => return "GET";
+            when SET => return "SET";
+            when RESET => return "RESET";
+            when NOTHING => return "NOTHING";
+        end case;
+        return "";
+    end to_string;
 begin
 
 stateadvance: process(clk)
@@ -55,7 +66,7 @@ begin
     if rising_edge(clk) and sending = '0'
     then
         if current_state /= next_state then
-            print(DEBUG, "ACC: changing state to: " &  to_string(next_state));
+            print(VERBOSE, "ACC: changing state to: " &  to_string(next_state));
         end if;
         current_state <= next_state;
         sleep := "11";
@@ -92,23 +103,23 @@ begin
             data := bus_data(8 downto 0);
             if id = OWN_ID and sending /= '1'
             then
-                print(DEBUG, "ACC: receive command: " & str(command));
-                next_state <= CMD;
                 current_cmd := decode_cmd(command);
+                print(DEBUG, "ACC: receive command: " & to_string(current_cmd) & " with data: " & str(data));
+                next_state <= CMD;
             else
                 next_state <= IDLE;
             end if;
     when CMD =>
         case current_cmd is
             when GET =>
-                print(DEBUG, "ACC: GET");
+                print(VERBOSE, "ACC: GET");
                 sent := "10";
                 next_state <= RUN;
             when SET =>
-                print(DEBUG, "ACC: SET");
+                print(VERBOSE, "ACC: SET");
                 next_state <= RUN;
             when RESET =>
-                print(DEBUG, "ACC: RESET");
+                print(VERBOSE, "ACC: RESET");
                 next_state <= RUN;
             when others =>
                 next_state <= IDLE;
@@ -118,15 +129,15 @@ begin
             when GET =>
                 should_send <= '1';
                 sending_data <= "ZZZZZZZ" & reg;
-                print(DEBUG, "ACC: set sending data:" & str(sending_data));
+                print(VERBOSE, "ACC: set sending data:" & str(sending_data));
                 next_state <= IDLE;
             when SET =>
                 reg <= data;
-                print(DEBUG, "ACC: set:" & str(data));
+                print(VERBOSE, "ACC: set:" & str(data));
                 next_state <= IDLE;
             when RESET =>
                 reg <= "000000000";
-                print(DEBUG, "ACC: reset:" & str(reg));
+                print(VERBOSE, "ACC: reset:" & str(reg));
                 next_state <= IDLE;
             when others =>
                 next_state <= IDLE;
@@ -137,6 +148,18 @@ begin
     end if;
 
 end process;
+
+startSending: process(sending)
+    variable data : std_logic_vector(15 downto 0);
+begin
+    if sending = '1' then
+        data := sending_data;
+        print(DEBUG, "ACC: starting sending: " & str(data));
+    else
+        print(DEBUG, "ACC: ending sending: " & str(data));
+    end if;
+end process;
+
 
 bus_data <= sending_data when sending = '1' else "ZZZZZZZZZZZZZZZZ";
 acc_out <= reg;
