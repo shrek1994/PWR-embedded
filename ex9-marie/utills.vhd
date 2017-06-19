@@ -23,6 +23,7 @@ package utills is
     constant RAM_ID : std_logic_vector (2 downto 0) := "001";
     constant PC_ID  : std_logic_vector (2 downto 0) := "010";
     constant ACC_ID : std_logic_vector (2 downto 0) := "011";
+    constant ALU_ID : std_logic_vector (2 downto 0) := "101";
 
     constant OxOO_DATA : std_logic_vector (8 downto 0) := "111000111";
     constant OxO1_DATA : std_logic_vector (8 downto 0) := "000111000";
@@ -33,10 +34,12 @@ package utills is
     constant OxO2 : std_logic_vector (8 downto 0) := "ZZZZ" & "00010";
     constant OxO3 : std_logic_vector (8 downto 0) := "ZZZZ" & "00011";
 
-    constant GET_CMD : std_logic_vector (3 downto 0) := "0001";
-    constant SET_CMD : std_logic_vector (3 downto 0) := "0010";
+    constant GET_CMD     : std_logic_vector (3 downto 0) := "0001";
+    constant SET_CMD     : std_logic_vector (3 downto 0) := "0010";
     constant NEXT_PC_CMD : std_logic_vector (3 downto 0) := "0011";
-    constant RESET_CMD : std_logic_vector (3 downto 0) := "1111";
+    constant ADD_CMD     : std_logic_vector (3 downto 0) := "0100";
+    constant SUBT_CMD    : std_logic_vector (3 downto 0) := "0101";
+    constant RESET_CMD   : std_logic_vector (3 downto 0) := "1111";
 
 
     constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
