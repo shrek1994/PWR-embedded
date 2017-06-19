@@ -56,7 +56,6 @@ architecture behavior of ram_pc_acc_tb is
     constant OxO2 : std_logic_vector (8 downto 0) := "ZZZZ" & "00010";
     constant OxO3 : std_logic_vector (8 downto 0) := "ZZZZ" & "00011";
 
-
     constant GET_CMD : std_logic_vector (3 downto 0) := "0001";
     constant SET_CMD : std_logic_vector (3 downto 0) := "0010";
     constant NEXT_PC_CMD : std_logic_vector (3 downto 0) := "0011";

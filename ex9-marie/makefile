@@ -4,7 +4,7 @@ TEST_BENCH := \
 	pc_tb \
 	acc_register_tb \
 	alu_tb \
-#	controller_tb \
+	controller_tb \
 #	main_line_tb
 
 INTEGRATION_TESTS := \

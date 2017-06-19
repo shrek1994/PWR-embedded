@@ -4,10 +4,21 @@ use ieee.numeric_std.all;
 use work.txt_util.all;
 use work.dataType_pkg.all;
 
-entity ram_pc_acc_tb is
-end ram_pc_acc_tb;
+entity controller_tb is
+end controller_tb;
 
-architecture behavior of ram_pc_acc_tb is
+architecture behavior of controller_tb is
+    component controller is
+        generic (DEBUG : boolean);
+        port(
+                clk : in std_logic;
+                bus_data : inout std_logic_vector (15 downto 0);
+
+                input_data : in std_logic_vector (8 downto 0);
+                output_data : out std_logic_vector (8 downto 0)
+        );
+    end component;
+
     component ram is
     generic (RAM_DATA : dataType; DEBUG : boolean);
         Port (
@@ -28,16 +39,22 @@ architecture behavior of ram_pc_acc_tb is
     generic (DEBUG : boolean);
         Port (
             clk : in std_logic;
-            bus_data : inout std_logic_vector (15 downto 0)
+            bus_data : inout std_logic_vector (15 downto 0);
+            acc_in : in std_logic_vector(8 downto 0);
+            acc_out : out std_logic_vector(8 downto 0)
         );
     end component;
 
-    signal clk :std_logic := '0';
-    constant clk_period :time := 10 ns;
+    signal clk : std_logic := '0';
+    constant clk_period : time := 10 ns;
 
-    constant DEBUG : boolean := false;
+    constant DEBUG : boolean := true;
 
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
+    signal input_data : std_logic_vector (8 downto 0) := (others => 'Z');
+    signal output_data : std_logic_vector (8 downto 0) := (others => 'Z');
+    signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
+    signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
     constant RAM_ID : std_logic_vector (2 downto 0) := "001";
     constant PC_ID : std_logic_vector (2 downto 0) := "010";
@@ -58,6 +75,7 @@ architecture behavior of ram_pc_acc_tb is
     constant NEXT_PC_CMD : std_logic_vector (3 downto 0) := "0011";
 
     constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
+    constant NOTHING : std_logic_vector (15 downto 0) := "ZZZZZZZZZZZZZZZZ";
 
     procedure loadFromRamToAcc(signal bus_data : inout std_logic_vector; address : in std_logic_vector) is
     begin
@@ -124,7 +142,16 @@ BEGIN
     uut3: acc_register generic map (DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
-        bus_data => bus_data
+        bus_data => bus_data,
+        acc_in => acc_in,
+        acc_out => acc_out
+    );
+    uut4: controller generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data,
+        input_data => input_data,
+        output_data => output_data
     );
 
     clk_process :process
@@ -138,12 +165,12 @@ BEGIN
     stim_proc: process
     begin
 
-    print(DEBUG, "RAM_PC_ACC_TB - START !");
+    print(DEBUG, "CTLR_TB - START !");
     wait for 100 ns;
 
 
 
-    print(DEBUG, "RAM_PC_ACC_TB - DONE !");
+    print(DEBUG, "CTLR_TB - DONE !");
     wait;
     end process;
 

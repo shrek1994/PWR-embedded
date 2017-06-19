@@ -1,6 +1,6 @@
-
-library IEEE;
-use IEEE.STD_LOGIC_1164.ALL;
+LIBRARY ieee;
+USE ieee.std_logic_1164.ALL;
+use ieee.numeric_std.all;
 USE work.txt_util.ALL;
 
 entity controller is
@@ -27,18 +27,63 @@ architecture Flow of controller is
 
     signal instruction_bits : std_logic_vector(3 downto 0);
     signal argument : std_logic_vector(4 downto 0);
+
+    constant RAM_ID : std_logic_vector (2 downto 0) := "001";
+    constant PC_ID  : std_logic_vector (2 downto 0) := "010";
+    constant ACC_ID : std_logic_vector (2 downto 0) := "011";
+    constant OWN_ID : std_logic_vector (2 downto 0) := "100";
+    constant ALU_ID : std_logic_vector (2 downto 0) := "101";
+
+    constant GET_CMD    : std_logic_vector (3 downto 0) := "0001";
+    constant SET_CMD    : std_logic_vector (3 downto 0) := "0010";
+    constant NEXT_PC_CMD: std_logic_vector (3 downto 0) := "0011";
+    constant ADD_CMD    : std_logic_vector (3 downto 0) := "0100";
+    constant SUBT_CMD   : std_logic_vector (3 downto 0) := "0101";
+
+    constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
+
 begin
 
-
-
-    nextstate: process(current_state, clk)
+    nextstate: process(clk)
+        variable number_of_instruction : unsigned (2 downto 0) := "000";
     begin
+        if falling_edge(clk) then
+            current_state <= next_state;
+
         case current_state is
-            when FETCH =>
-                print(DEBUG, "CTRL: FETCH");
-                instruction_bits <= instruction(8 downto 5);
-                argument <= instruction(4 downto 0);
-                current_state <= DECODE;
+            when FETCH => -- get instruction
+
+                if number_of_instruction = "100" then
+                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                    bus_data <= "ZZZZZZZZZZZZZZZZ";
+                    next_state <= DECODE;
+                end if;
+
+
+                if number_of_instruction = "011" then
+                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                    bus_data <= "ZZZZZZZZZZZZZZZZ";
+                    number_of_instruction := number_of_instruction + 1;
+                end if;
+
+                if number_of_instruction = "010" then
+                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                    bus_data <= RAM_ID & GET_CMD & NULL_DATA;
+                    number_of_instruction := number_of_instruction + 1;
+                end if;
+
+                if number_of_instruction = "001" then
+                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                    bus_data <= "ZZZZZZZZZZZZZZZZ";
+                    number_of_instruction := number_of_instruction + 1;
+                end if;
+
+                if number_of_instruction = "000" then
+                    print(DEBUG, "CTRL: number_of_instruction: " & str(std_logic_vector(number_of_instruction)));
+                    bus_data <= PC_ID & GET_CMD & NULL_DATA;
+                    number_of_instruction := number_of_instruction + 1;
+                end if;
+
             when DECODE =>
                 print(DEBUG, "CTRL: DECODE: instruction_bits: " & str(instruction_bits));
                 case instruction_bits is
@@ -53,12 +98,9 @@ begin
                     when others =>
                         current_cmd <= HALT;
                 end case;
-                current_state <= EXECUTE;
+                next_state <= EXECUTE;
             when EXECUTE =>
                 case current_cmd is
-                    when LOAD =>
-                        address <= argument;
-                        save_to_ram <= '1';
                     when others =>
                         null;
                 end case;
