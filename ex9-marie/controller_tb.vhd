@@ -195,7 +195,7 @@ BEGIN                               -- 0x00
     print(DEBUG, "------------------------------------ FIRST SECENARIO (EMPTY ACC) ------------------------------------");
     -- 0x00 first output - everything clear - so output is "000000000"
     wait for 70 ns;
-    assert output_data = "000000000" report "expected " & ": '" & str("000000000") &"', got: '" & str(output_data) & "'";
+    assert output_data = "000000000" report "1. expected " & ": '" & str("000000000") &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     -- 80 ns
@@ -203,7 +203,7 @@ BEGIN                               -- 0x00
 
     -- 0x02 output after load 0x1F
     wait for 155 ns;
-    assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
+    assert output_data = Ox1F_DATA report "2. expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     -- 240 ns
@@ -212,7 +212,7 @@ BEGIN                               -- 0x00
     -- 0x04 output after store 0x1F with output_command
 
     wait for 155 ns;
-    assert output_data = Ox1F_DATA report "expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
+    assert output_data = Ox1F_DATA report "3. expected " & ": '" & str(Ox1F_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     -- 400 ns
@@ -221,7 +221,7 @@ BEGIN                               -- 0x00
     -- 0x07 output with sum of 0x1D and 0x1Ed
 
     wait for 245 ns;
-    assert output_data = SUM_1D_1E report "expected " & ": '" & str(SUM_1D_1E) &"', got: '" & str(output_data) & "'";
+    assert output_data = SUM_1D_1E report "4. expected " & ": '" & str(SUM_1D_1E) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     -- 650 ns
@@ -229,7 +229,7 @@ BEGIN                               -- 0x00
 
     -- 0x07 output is sum(0x1D, 0x1E) - 0x1D = 0x1E
     wait for 155 ns;
-    assert output_data = Ox1E_DATA report "expected " & ": '" & str(Ox1E_DATA) &"', got: '" & str(output_data) & "'";
+    assert output_data = Ox1E_DATA report "5. expected " & ": '" & str(Ox1E_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     -- 810 ns
@@ -240,7 +240,7 @@ BEGIN                               -- 0x00
     wait for 70 ns;
     input_data <= NULL_DATA;
     wait for 65 ns;
-    assert output_data = DATA report "expected " & ": '" & str(DATA) &"', got: '" & str(output_data) & "'";
+    assert output_data = DATA report "6. expected " & ": '" & str(DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     -- 950 ns
@@ -248,7 +248,7 @@ BEGIN                               -- 0x00
 
     -- on output ZERO
     wait for 245 ns;
-    assert output_data = Ox1C_ZERO_DATA report "expected " & ": '" & str(Ox1C_ZERO_DATA) &"', got: '" & str(output_data) & "'";
+    assert output_data = Ox1C_ZERO_DATA report "7. expected " & ": '" & str(Ox1C_ZERO_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
     print(DEBUG, "CTLR_TB - DONE !");
