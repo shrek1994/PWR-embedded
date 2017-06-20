@@ -82,10 +82,14 @@ architecture behavior of controller_tb is
     constant SKIPCOND : std_logic_vector (3 downto 0) := "1000";
     constant JUMP     : std_logic_vector (3 downto 0) := "1001";
 
-    constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
+    constant IF_ACC_LESS_THAN_ZERO : std_logic_vector (4 downto 0) := "00000";
+    constant IF_ACC_MORE_THAN_ZERO : std_logic_vector (4 downto 0) := "01000";
+    constant IF_ACC_EQUAL_ZERO     : std_logic_vector (4 downto 0) := "10000";
 
     constant Ox1C_ZERO : std_logic_vector (8 downto 0) := "ZZZZ" & "11100";
 
+    constant Ox1A_POSITIVE_DATA : std_logic_vector (8 downto 0) := "000011111";
+    constant Ox1B_NEGATIVE_DATA : std_logic_vector (8 downto 0) := "100011111";
     constant Ox1C_ZERO_DATA : std_logic_vector (8 downto 0) := "000000000";
 
     constant Ox1D_DATA : std_logic_vector (8 downto 0) := "000010101";
@@ -101,34 +105,39 @@ BEGIN                               -- 0x00
                                        OUTPUT & NULL_ARGUMENT,
                                        STORE & OxO4(4 downto 0),
                                        NULL_COMMAND, -- should store command frow 0x1f which is output
+
                                        -- 5 (0x05)
                                        LOAD & Ox1D(4 downto 0),
                                        ADD & Ox1E(4 downto 0),
                                        OUTPUT & NULL_ARGUMENT,
                                        SUBT & Ox1D(4 downto 0),
                                        OUTPUT & NULL_ARGUMENT,
+
                                        -- 10 (0x0A)
                                        INPUT & NULL_ARGUMENT,
                                        OUTPUT & NULL_ARGUMENT,
                                        JUMP & OxOE(4 downto 0),
                                        HALT & NULL_ARGUMENT,
                                        LOAD & Ox1C_ZERO(4 downto 0), -- 0x0E
+
                                        -- 15 (0x0F)
                                        OUTPUT & NULL_ARGUMENT,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
+                                       SKIPCOND & IF_ACC_EQUAL_ZERO,
+                                       HALT & NULL_ARGUMENT,
+                                       LOAD & Ox1A(4 downto 0), -- negative data
+                                       SKIPCOND & IF_ACC_LESS_THAN_ZERO,
+
                                        -- 20 (0x14)
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
+                                       HALT & NULL_ARGUMENT,
+                                       LOAD & Ox1B(4 downto 0), -- positive data
+                                       SKIPCOND & IF_ACC_MORE_THAN_ZERO,
+                                       HALT & NULL_ARGUMENT,
+                                       OUTPUT & NULL_ARGUMENT,
+
                                        -- 25 (0x19)
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
+                                       HALT & NULL_ARGUMENT,
+                                       Ox1A_POSITIVE_DATA,
+                                       Ox1B_NEGATIVE_DATA,
                                        Ox1C_ZERO_DATA,
                                        Ox1D_DATA,
                                        -- 30 (0x1E)
@@ -250,6 +259,16 @@ BEGIN                               -- 0x00
     wait for 245 ns;
     assert output_data = Ox1C_ZERO_DATA report "7. expected " & ": '" & str(Ox1C_ZERO_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
+
+
+    -- 950 ns
+    print(DEBUG, "------------------------------------ EIGHTH SECENARIO (ALL 3 SKIPCOND) ------------------------------------");
+
+    -- on output Positive data
+    wait for 845 ns;
+    assert output_data = Ox1A_POSITIVE_DATA report "7. expected " & ": '" & str(Ox1A_POSITIVE_DATA) &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
+
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;
