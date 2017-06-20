@@ -28,6 +28,12 @@ package utills is
     constant ALU_ID : std_logic_vector (2 downto 0) := "101";
 
     constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
+    constant ZERO_DATA : std_logic_vector (8 downto 0) := NULL_COMMAND;
+
+    constant IF_ACC_LESS_THAN_ZERO : std_logic_vector (4 downto 0) := "00000";
+    constant IF_ACC_MORE_THAN_ZERO : std_logic_vector (4 downto 0) := "01000";
+    constant IF_ACC_EQUAL_ZERO     : std_logic_vector (4 downto 0) := "10000";
+
 
     constant OxOO_DATA : std_logic_vector (8 downto 0) := "111000111";
     constant OxO1_DATA : std_logic_vector (8 downto 0) := "000111000";
@@ -40,6 +46,7 @@ package utills is
     constant OxO4 : std_logic_vector (8 downto 0) := "ZZZZ" & "00100";
 
     constant OxOE : std_logic_vector (8 downto 0) := "ZZZZ" & "01110";
+    constant Ox19 : std_logic_vector (8 downto 0) := "ZZZZ" & "11001";
 
     constant Ox1A : std_logic_vector (8 downto 0) := "ZZZZ" & "11010";
     constant Ox1B : std_logic_vector (8 downto 0) := "ZZZZ" & "11011";

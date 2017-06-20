@@ -39,6 +39,20 @@ architecture Flow of controller is
 
     signal instruction_bits : std_logic_vector(3 downto 0);
     signal argument_bits : std_logic_vector(4 downto 0);
+
+    type skipcond_type is (LESS_THAN_ZERO, EQUAL_ZERO, MORE_THAN_ZERO, SKIP);
+    signal kind_skipcond : skipcond_type := SKIP;
+
+    function to_string(kind_skipcond : skipcond_type) return string is
+    begin
+        case kind_skipcond is
+            when LESS_THAN_ZERO => return "LESS_THAN_ZERO";
+            when EQUAL_ZERO => return "EQUAL_ZERO";
+            when MORE_THAN_ZERO => return "MORE_THAN_ZERO";
+            when SKIP => return "SKIP";
+        end case;
+        return "";
+    end to_string;
 begin
 
     clock : process (clk)
@@ -54,7 +68,7 @@ begin
             if current_state /= next_state then
                 print(DEBUG, "CTRL: changing state");
             end if;
-        current_state <= next_state;
+            current_state <= next_state;
         end if;
     end process;
 
@@ -103,6 +117,16 @@ begin
                         current_cmd <= HALT;
                     when "1000" =>
                         current_cmd <= SKIPCOND;
+                        case argument_bits is
+                            when IF_ACC_LESS_THAN_ZERO =>
+                                kind_skipcond <= LESS_THAN_ZERO;
+                            when IF_ACC_EQUAL_ZERO =>
+                                kind_skipcond <= EQUAL_ZERO;
+                            when IF_ACC_MORE_THAN_ZERO =>
+                                kind_skipcond <= MORE_THAN_ZERO;
+                            when others =>
+                                kind_skipcond <= SKIP;
+                        end case;
                     when "1001" =>
                         current_cmd <= JUMP;
                     when others =>
@@ -147,7 +171,31 @@ begin
                         send_bus_data <= PC_ID & SET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
+                    when SKIPCOND =>
+                        print(DEBUG, "CTRL: skipcond: " & to_string(kind_skipcond) & ", acc: " & str(acc_out));
+                        send_bus_data <= PC_ID & NEXT_PC_CMD & NULL_DATA;
+                        case kind_skipcond is
+                            when LESS_THAN_ZERO =>
+                                if acc_out(8 downto 8) = "1" then
+                                    send_bus <= '1';
+                                    print(DEBUG, "CTRL: skip next instruction ! " & to_string(kind_skipcond) & ", acc: " & str(acc_out));
+                                end if;
+                            when EQUAL_ZERO =>
+                                if acc_out = ZERO_DATA then
+                                    send_bus <= '1';
+                                    print(DEBUG, "CTRL: skip next instruction ! " & to_string(kind_skipcond) & ", acc: " & str(acc_out));
+                                end if;
+                            when MORE_THAN_ZERO =>
+                                if acc_out(8 downto 8) = "0" and acc_out /= ZERO_DATA then
+                                    send_bus <= '1';
+                                    print(DEBUG, "CTRL: skip next instruction ! " & to_string(kind_skipcond) & ", acc: " & str(acc_out));
+                                end if;
+                            when others =>
+                                null;
+                        end case;
+                        next_state <= EXECUTE_2;
                     when others =>
+                        print(DEBUG, "CTRL: HALT !!!");
                         next_state <= HALT;
                 end case;
             when EXECUTE_2 =>
@@ -165,6 +213,8 @@ begin
                     when SUBT =>
                         next_state <= STORE;
                     when JUMP =>
+                        next_state <= STORE;
+                    when SKIPCOND =>
                         next_state <= STORE;
                     when others =>
                         next_state <= HALT;
@@ -190,6 +240,8 @@ begin
                         send_bus <= '1';
                         next_state <= FETCH;
                     when JUMP =>
+                        next_state <= FETCH;
+                    when SKIPCOND =>
                         next_state <= FETCH;
                     when others =>
                         next_state <= HALT;

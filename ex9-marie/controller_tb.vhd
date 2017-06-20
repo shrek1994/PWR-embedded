@@ -82,10 +82,6 @@ architecture behavior of controller_tb is
     constant SKIPCOND : std_logic_vector (3 downto 0) := "1000";
     constant JUMP     : std_logic_vector (3 downto 0) := "1001";
 
-    constant IF_ACC_LESS_THAN_ZERO : std_logic_vector (4 downto 0) := "00000";
-    constant IF_ACC_MORE_THAN_ZERO : std_logic_vector (4 downto 0) := "01000";
-    constant IF_ACC_EQUAL_ZERO     : std_logic_vector (4 downto 0) := "10000";
-
     constant Ox1C_ZERO : std_logic_vector (8 downto 0) := "ZZZZ" & "11100";
 
     constant Ox1A_POSITIVE_DATA : std_logic_vector (8 downto 0) := "000011111";
@@ -123,15 +119,15 @@ BEGIN                               -- 0x00
                                        -- 15 (0x0F)
                                        OUTPUT & NULL_ARGUMENT,
                                        SKIPCOND & IF_ACC_EQUAL_ZERO,
-                                       HALT & NULL_ARGUMENT,
-                                       LOAD & Ox1A(4 downto 0), -- negative data
+                                       JUMP & Ox19(4 downto 0), -- jump to halt
+                                       LOAD & Ox1B(4 downto 0), -- negative data
                                        SKIPCOND & IF_ACC_LESS_THAN_ZERO,
 
                                        -- 20 (0x14)
-                                       HALT & NULL_ARGUMENT,
-                                       LOAD & Ox1B(4 downto 0), -- positive data
+                                       JUMP & Ox19(4 downto 0), -- jump to halt
+                                       LOAD & Ox1A(4 downto 0), -- positive data
                                        SKIPCOND & IF_ACC_MORE_THAN_ZERO,
-                                       HALT & NULL_ARGUMENT,
+                                       JUMP & Ox19(4 downto 0), -- jump to halt
                                        OUTPUT & NULL_ARGUMENT,
 
                                        -- 25 (0x19)
@@ -261,15 +257,15 @@ BEGIN                               -- 0x00
     wait for 5 ns;
 
 
-    -- 950 ns
+    -- 1200 ns
     print(DEBUG, "------------------------------------ EIGHTH SECENARIO (ALL 3 SKIPCOND) ------------------------------------");
 
     -- on output Positive data
-    wait for 845 ns;
+    wait for 515 ns;
     assert output_data = Ox1A_POSITIVE_DATA report "7. expected " & ": '" & str(Ox1A_POSITIVE_DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
-
+    -- 1720 ns
     print(DEBUG, "CTLR_TB - DONE !");
     wait;
     end process;
