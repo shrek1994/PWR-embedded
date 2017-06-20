@@ -18,7 +18,7 @@ architecture behavior of main_line_tb is
         output_data      : out std_logic_vector(8 downto 0)
         );
     end component;
-    constant DEBUG: boolean := true;
+    constant DEBUG: boolean := false;
 
     constant RAM_DATA : data_type := (
 
@@ -82,9 +82,8 @@ begin
     simul_process : process
     begin
         wait for clk_period;
-        run <= '1';
 
---         assert output = EXPECTED_DATA report "ERROR! expected: " & str(EXPECTED_DATA) & ", was: " & str(output);
+        run <= '1';
 
         wait for 1 ms;
     end process;

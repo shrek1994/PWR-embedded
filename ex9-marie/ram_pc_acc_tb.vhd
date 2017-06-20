@@ -12,7 +12,9 @@ architecture behavior of ram_pc_acc_tb is
     generic (RAM_DATA : data_type; DEBUG : boolean);
         Port (
             clk : in std_logic;
-            bus_data : inout std_logic_vector (15 downto 0)
+            bus_data : inout std_logic_vector (15 downto 0);
+
+            ram_debug : out data_type
               );
     end component;
 
@@ -42,11 +44,15 @@ architecture behavior of ram_pc_acc_tb is
     signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
     signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
+    signal ram_debug : data_type := (others => "ZZZZZZZZZ");
+
 BEGIN
     uut: ram generic map (RAM_DATA => (OxOO_DATA, OxO1_DATA, OxO2_DATA, others => "000000000"), DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
-        bus_data => bus_data
+        bus_data => bus_data,
+
+        ram_debug => ram_debug
     );
 
     uut2: pc generic map (DEBUG => DEBUG)

@@ -12,7 +12,9 @@ architecture behavior of ram_tb is
     generic (RAM_DATA : data_type; DEBUG : boolean);
         Port (
             clk : in std_logic;
-            bus_data : inout std_logic_vector (15 downto 0)
+            bus_data : inout std_logic_vector (15 downto 0);
+
+            ram_debug : out data_type
               );
     end component;
 
@@ -21,13 +23,17 @@ architecture behavior of ram_tb is
     signal clk :std_logic := '0';
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
 
+    signal ram_debug : data_type := (others => "ZZZZZZZZZ");
+
     constant NEW_DATA : std_logic_vector (8 downto 0) := "101010101";
 BEGIN
     -- Instantiate the Unit Under Test (UUT)
     uut: ram generic map (RAM_DATA => (OxOO_DATA, OxO1_DATA, OxO2_DATA, others => "000000000"), DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
-        bus_data => bus_data
+        bus_data => bus_data,
+
+        ram_debug => ram_debug
     );
 
     -- Clock process definitions

@@ -28,7 +28,7 @@ architecture behavior of controller_tb is
             clk : in std_logic;
             bus_data : inout std_logic_vector (15 downto 0);
 
-            ram_debug : inout data_type
+            ram_debug : out data_type
               );
     end component;
 
