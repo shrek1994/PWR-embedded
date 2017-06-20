@@ -26,6 +26,10 @@ architecture Flow of controller is
     signal current_cmd : cmd_type := HALT;
 
     signal receive : std_logic := '0';
+    signal data : std_logic_vector (8 downto 0);
+
+    signal send_acc : std_logic := '0';
+    signal send_acc_data : std_logic_vector (8 downto 0);
 
     signal send_out : std_logic := '0';
     signal send_out_data : std_logic_vector (8 downto 0);
@@ -42,7 +46,8 @@ begin
         if rising_edge(clk) and receive = '1' then
             instruction_bits <= bus_data(8 downto 5);
             argument_bits <= bus_data(4 downto 0);
-            print(DEBUG, "CTRL: receive command: " & str(instruction_bits) & "-" & str(argument_bits));
+            data <= input_data;
+            print(DEBUG, "CTRL: receive command: " & str(instruction_bits) & "-" & str(argument_bits) & ", data: " & str(data));
         end if;
 
         if falling_edge(clk) then
@@ -54,10 +59,10 @@ begin
     end process;
 
     nextstate: process(current_state)
-        variable fetch_state : unsigned (2 downto 0) := "000"; -- TODO change to enum !!!
     begin
         send_bus <= '0';
         send_out <= '0';
+        send_acc <= '0';
 
         case current_state is
             when FETCH =>
@@ -79,7 +84,6 @@ begin
             when FETCH_5 =>
                 next_state <= DECODE;
             when DECODE =>
-                fetch_state := "000";
                 receive <= '0';
                 print(DEBUG, "CTRL: DECODE: instruction_bits: " & str(instruction_bits));
                 case instruction_bits is
@@ -129,16 +133,20 @@ begin
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
                     when SUBT =>
-                        print(DEBUG, "CTRL: add: " & str(argument_bits));
+                        print(DEBUG, "CTRL: subt: " & str(argument_bits));
 
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
-
+                    when INPUT =>
+                        print(DEBUG, "CTRL: input: " & str(data));
+                        send_acc_data <= data;
+                        send_acc <= '1';
+                        next_state <= FETCH;
                     when OUTPUT =>
-                            print(DEBUG, "CTRL: sending: " & str(acc_out));
-                            send_out <= '1';
-                            next_state <= FETCH;
+                        print(DEBUG, "CTRL: sending: " & str(acc_out));
+                        send_out <= '1';
+                        next_state <= FETCH;
                     when others =>
                         next_state <= HALT;
                 end case;
@@ -149,10 +157,8 @@ begin
                         next_state <= STORE;
                     when STORE =>
                         print(DEBUG, "CTRL: store into: " & str(argument_bits));
-
                         send_bus_data <= RAM_ID & SET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
-
                         next_state <= STORE;
                     when ADD =>
                         next_state <= STORE;
@@ -176,15 +182,11 @@ begin
                     when ADD =>
                         send_bus_data <= ALU_ID & ADD_CMD & NULL_DATA;
                         send_bus <= '1';
-
                         next_state <= FETCH;
                     when SUBT =>
                         send_bus_data <= ALU_ID & SUBT_CMD & NULL_DATA;
                         send_bus <= '1';
-
                         next_state <= FETCH;
-                    when OUTPUT =>
-                        null;
                     when others =>
                         next_state <= HALT;
                 end case;
@@ -218,8 +220,20 @@ begin
         end if;
     end process;
 
+    startSendingAcc: process(send_acc)
+        variable data : std_logic_vector(8 downto 0);
+    begin
+        if send_acc = '1' then
+            data := send_acc_data;
+            print(DEBUG, "CTRL: starting sending acc: " & str(data));
+        else
+            print(DEBUG, "CTRL: ending sending acc: " & str(data));
+        end if;
+    end process;
+
     output_data <= acc_out when send_out = '1' else NULL_DATA;
     bus_data <= send_bus_data when send_bus = '1' else NULL_BUS_DATA;
+    acc_in <= send_acc_data when send_acc = '1' else NULL_DATA;
 
 end Flow;
 

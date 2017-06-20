@@ -86,6 +86,7 @@ architecture behavior of controller_tb is
 
     constant Ox1F_DATA : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
 
+    constant DATA : std_logic_vector (8 downto 0) := "111000111";
 BEGIN
     uut: ram generic map (RAM_DATA => (OUTPUT & NULL_ARGUMENT,
                                        LOAD & Ox1F(4 downto 0),
@@ -99,8 +100,8 @@ BEGIN
                                        SUBT & Ox1D(4 downto 0),
                                        OUTPUT & NULL_ARGUMENT,
                                        -- 10
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
+                                       INPUT & NULL_ARGUMENT,
+                                       OUTPUT& NULL_ARGUMENT,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
@@ -220,6 +221,14 @@ BEGIN
     wait for 5 ns;
 
     -- 810 ns
+    print(DEBUG, "------------------------------------ SIXTH SECENARIO (INPUT) ------------------------------------");
+
+    -- 0x00 on output the same value as in input
+    input_data <= DATA;
+    wait for 135 ns;
+    assert output_data = DATA report "expected " & ": '" & str(DATA) &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
+    input_data <= NULL_DATA;
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;
