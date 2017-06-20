@@ -19,11 +19,10 @@ entity controller is
 end controller;
 
 architecture Flow of controller is
-    type state is (FETCH, FETCH_2, FETCH_3, FETCH_4, FETCH_5, DECODE, EXECUTE, EXECUTE_2, STORE, HALT);
-    signal current_state : state := HALT;
+    type state is (FETCH, FETCH_2, FETCH_3, FETCH_4, FETCH_5, DECODE, EXECUTE, EXECUTE_2, STORE, HALT_STATE);
+    signal current_state : state := HALT_STATE;
     signal next_state : state := FETCH;
 
-    signal current_cmd : cmd_type := HALT;
 
     signal receive : std_logic := '0';
     signal data : std_logic_vector (8 downto 0);
@@ -53,6 +52,26 @@ architecture Flow of controller is
         end case;
         return "";
     end to_string;
+
+    type cmd_type is (LOAD, STORE, ADD, SUBT, INPUT, OUTPUT, HALT, SKIPCOND, JUMP);
+    signal current_cmd : cmd_type := HALT;
+
+    function str(cmd : cmd_type) return string is
+    begin
+        case cmd is
+            when LOAD => return "LOAD";
+            when STORE => return "STORE";
+            when ADD => return "ADD";
+            when SUBT => return "SUBT";
+            when INPUT => return "INPUT";
+            when OUTPUT => return "OUTPUT";
+            when HALT => return "HALT";
+            when SKIPCOND => return "SKIPCOND";
+            when JUMP => return "JUMP";
+        end case;
+        return "";
+    end;
+
 begin
 
     clock : process (clk)
@@ -196,7 +215,7 @@ begin
                         next_state <= EXECUTE_2;
                     when others =>
                         print(DEBUG, "CTRL: HALT !!!");
-                        next_state <= HALT;
+                        next_state <= HALT_STATE;
                 end case;
             when EXECUTE_2 =>
                 print(DEBUG, "CTRL: EXECUTE_2: instruction: " & str(current_cmd));
@@ -217,7 +236,7 @@ begin
                     when SKIPCOND =>
                         next_state <= STORE;
                     when others =>
-                        next_state <= HALT;
+                        next_state <= HALT_STATE;
                 end case;
             when STORE =>
                 print(DEBUG, "CTRL: STORE: instruction: " & str(current_cmd));
@@ -244,9 +263,9 @@ begin
                     when SKIPCOND =>
                         next_state <= FETCH;
                     when others =>
-                        next_state <= HALT;
+                        next_state <= HALT_STATE;
                 end case;
-            when HALT =>
+            when HALT_STATE =>
                 null;
             when others =>
                 null;

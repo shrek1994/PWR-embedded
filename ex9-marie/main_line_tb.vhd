@@ -18,11 +18,11 @@ architecture behavior of main_line_tb is
         output_data      : out std_logic_vector(8 downto 0)
         );
     end component;
-    constant DEBUG: boolean := false;
+    constant DEBUG: boolean := true;
 
     constant RAM_DATA : data_type := (
 
-        NULL_COMMAND,
+        HALT & NULL_ARGUMENT,
         NULL_COMMAND,
         NULL_COMMAND,
         NULL_COMMAND,
@@ -86,6 +86,6 @@ begin
 
 --         assert output = EXPECTED_DATA report "ERROR! expected: " & str(EXPECTED_DATA) & ", was: " & str(output);
 
-        wait;
+        wait for 1 ms;
     end process;
 end;

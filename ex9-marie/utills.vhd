@@ -27,6 +27,17 @@ package utills is
     constant ACC_ID : std_logic_vector (2 downto 0) := "011";
     constant ALU_ID : std_logic_vector (2 downto 0) := "101";
 
+    constant LOAD     : std_logic_vector (3 downto 0) := "0001";
+    constant STORE    : std_logic_vector (3 downto 0) := "0010";
+    constant ADD      : std_logic_vector (3 downto 0) := "0011";
+    constant SUBT     : std_logic_vector (3 downto 0) := "0100";
+
+    constant INPUT    : std_logic_vector (3 downto 0) := "0101";
+    constant OUTPUT   : std_logic_vector (3 downto 0) := "0110";
+    constant HALT     : std_logic_vector (3 downto 0) := "0111";
+    constant SKIPCOND : std_logic_vector (3 downto 0) := "1000";
+    constant JUMP     : std_logic_vector (3 downto 0) := "1001";
+
     constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
     constant ZERO_DATA : std_logic_vector (8 downto 0) := NULL_COMMAND;
 
@@ -62,20 +73,15 @@ package utills is
     constant SUBT_CMD    : std_logic_vector (3 downto 0) := "0101";
     constant RESET_CMD   : std_logic_vector (3 downto 0) := "1111";
 
-
     constant NULL_ARGUMENT : std_logic_vector (4 downto 0) := "ZZZZZ";
     constant NULL_DATA : std_logic_vector (8 downto 0) := "ZZZZZZZZZ";
     constant NULL_BUS_DATA : std_logic_vector (15 downto 0) := "ZZZZZZZZZZZZZZZZ";
-
-
-    -- from controller
-    type cmd_type is (LOAD, STORE, ADD, SUBT, INPUT, OUTPUT, HALT, SKIPCOND, JUMP);
-    function str(cmd : cmd_type) return string;
 
     procedure printRAM(active : boolean; data : data_type);
 end package utills;
 
 package body utills is
+
     procedure printRAM(active : boolean; data : data_type) is
         variable i : unsigned(5 downto 0);
     begin
@@ -86,23 +92,6 @@ package body utills is
         i :=  i + 1;
         end loop;
         print(active, "-------------------------------------------- END RAM --------------------------------------------");
-    end;
-
-
-    function str(cmd : cmd_type) return string is
-    begin
-        case cmd is
-            when LOAD => return "LOAD";
-            when STORE => return "STORE";
-            when ADD => return "ADD";
-            when SUBT => return "SUBT";
-            when INPUT => return "INPUT";
-            when OUTPUT => return "OUTPUT";
-            when HALT => return "HALT";
-            when SKIPCOND => return "SKIPCOND";
-            when JUMP => return "JUMP";
-        end case;
-        return "";
     end;
 
     procedure checkDataInRam(signal bus_data : inout std_logic_vector; address : in std_logic_vector; expected : in std_logic_vector; msg : string) is

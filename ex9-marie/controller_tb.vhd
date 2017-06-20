@@ -60,7 +60,7 @@ architecture behavior of controller_tb is
             );
     end component;
 
-    constant DEBUG : boolean := true;
+    constant DEBUG : boolean := false;
 
     signal clk : std_logic := '0';
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
@@ -70,17 +70,6 @@ architecture behavior of controller_tb is
     signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
     signal ram_debug : data_type;
-
-    constant LOAD     : std_logic_vector (3 downto 0) := "0001";
-    constant STORE    : std_logic_vector (3 downto 0) := "0010";
-    constant ADD      : std_logic_vector (3 downto 0) := "0011";
-    constant SUBT     : std_logic_vector (3 downto 0) := "0100";
-
-    constant INPUT    : std_logic_vector (3 downto 0) := "0101";
-    constant OUTPUT   : std_logic_vector (3 downto 0) := "0110";
-    constant HALT     : std_logic_vector (3 downto 0) := "0111";
-    constant SKIPCOND : std_logic_vector (3 downto 0) := "1000";
-    constant JUMP     : std_logic_vector (3 downto 0) := "1001";
 
     constant Ox1C_ZERO : std_logic_vector (8 downto 0) := "ZZZZ" & "11100";
 

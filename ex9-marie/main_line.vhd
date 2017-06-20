@@ -67,72 +67,16 @@ architecture behavior of main_line is
     end component;
 
     signal clk : std_logic := '0';
+
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
     signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
     signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
+    signal ram_debug : data_type := (others => "ZZZZZZZZZ");
 
-    signal ram_debug : data_type;
+    signal start : std_logic := '0';
 
-    constant LOAD     : std_logic_vector (3 downto 0) := "0001";
-    constant STORE    : std_logic_vector (3 downto 0) := "0010";
-    constant ADD      : std_logic_vector (3 downto 0) := "0011";
-    constant SUBT     : std_logic_vector (3 downto 0) := "0100";
-
-    constant INPUT    : std_logic_vector (3 downto 0) := "0101";
-    constant OUTPUT   : std_logic_vector (3 downto 0) := "0110";
-    constant HALT     : std_logic_vector (3 downto 0) := "0111";
-    constant SKIPCOND : std_logic_vector (3 downto 0) := "1000";
-    constant JUMP     : std_logic_vector (3 downto 0) := "1001";
 BEGIN
-    random_access_memory: ram generic map (
-    RAM_DATA => (
-
-    HALT & NULL_ARGUMENT,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-
-    -- 5 (0x05)
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-
-    -- 10 (0x0A)
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-
-    -- 15 (0x0F)
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-
-    -- 20 (0x14)
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-
-    -- 25 (0x19)
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-    NULL_COMMAND,
-
-    -- 30 (0x1E)
-    NULL_COMMAND,
-    NULL_COMMAND
-
-    ), DEBUG => DEBUG)
+    random_access_memory: ram generic map (RAM_DATA => RAM_DATA, DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
         bus_data => bus_data,
@@ -174,11 +118,12 @@ BEGIN
         acc_out => acc_out
     );
 
-    start :process(run)
+    clk_process : process
     begin
-        if run = '1' then
-            null;
-        end if;
+        clk <= '0';
+        wait for clk_period / 2;
+        clk <= '1';
+        wait for clk_period / 2;
     end process;
 
 END;
