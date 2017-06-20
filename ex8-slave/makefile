@@ -6,7 +6,7 @@ OBJ := $(TEST_BENCH:_tb=)
 STOP_TIME := 1ms
 
 all: $(TEST_BENCH)
-	@echo "napisac SPRAWKO !!!"
+	@#@echo "napisac SPRAWKO !!!"
 
 $(TEST_BENCH): %_tb : % %.vhd
 	$(GHDL) -a $@.vhd
