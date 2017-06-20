@@ -27,6 +27,8 @@ package utills is
     constant ACC_ID : std_logic_vector (2 downto 0) := "011";
     constant ALU_ID : std_logic_vector (2 downto 0) := "101";
 
+    constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
+
     constant OxOO_DATA : std_logic_vector (8 downto 0) := "111000111";
     constant OxO1_DATA : std_logic_vector (8 downto 0) := "000111000";
     constant OxO2_DATA : std_logic_vector (8 downto 0) := "010101010";

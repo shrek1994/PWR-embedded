@@ -2,102 +2,183 @@ LIBRARY ieee;
 USE ieee.std_logic_1164.ALL;
 use ieee.numeric_std.all;
 use work.txt_util.all;
-use work.dataType_pkg.all;
+use work.utills.all;
 
 entity main_line is
-    generic (RAM_DATA : dataType := ( others => "000000000"));
+    generic (RAM_DATA : data_type := ( others => "000000000"); DEBUG : boolean);
     Port (
-    run       : in  std_logic;
-    input       : in std_logic_vector(4 downto 0);
-    output      : out std_logic_vector(4 downto 0);
-
-    debug_ram_out   : out std_logic_vector(8 downto 0);
-    debug_address   : out std_logic_vector(4 downto 0)
+        run       : in  std_logic;
+        input_data       : in std_logic_vector(8 downto 0);
+        output_data      : out std_logic_vector(8 downto 0)
         );
 end main_line;
 
 architecture behavior of main_line is
-
-    component ram is generic (RAM_DATA: dataType);
-        Port (address   : in  STD_LOGIC_VECTOR (4 downto 0);
-            save      : in std_logic;
-            ram_in   : in  STD_LOGIC_VECTOR (8 downto 0);
-            ram_out  : out STD_LOGIC_VECTOR (8 downto 0)
-            );
-    end component;
-
-    component pc is
-        Port (clk   : in  std_logic;
-            set      : in std_logic;
-            data_in   : in  STD_LOGIC_VECTOR (4 downto 0);
-            data_out  : out STD_LOGIC_VECTOR (4 downto 0)
-            );
-    end component;
-
-    component acc_register is
-        Port (set      : in std_logic;
-            data_in   : in  STD_LOGIC_VECTOR (4 downto 0);
-            data_out  : out STD_LOGIC_VECTOR (4 downto 0)
-            );
-    end component;
-
     component controller is
+        generic (DEBUG : boolean);
         port(
-            instruction:   in std_logic_vector (8 downto 0);
-            operation:     out std_logic_vector (1 downto 0);
-            value :        out std_logic_vector(4 downto 0);
-            address :      out std_logic_vector(4 downto 0);
-            save_to_ram :  out std_logic;
-            save_to_pc :   out std_logic;
-            save_to_acc :  out std_logic;
-            next_pc :      out std_logic
+                clk : in std_logic;
+                bus_data : inout std_logic_vector (15 downto 0);
+
+                acc_in : out std_logic_vector(8 downto 0);
+                acc_out : in std_logic_vector(8 downto 0);
+
+                input_data : in std_logic_vector (8 downto 0);
+                output_data : out std_logic_vector (8 downto 0)
         );
     end component;
 
+    component ram is
+    generic (RAM_DATA : data_type; DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0);
+
+            ram_debug : inout data_type
+              );
+    end component;
+
+    component pc is
+    generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0)
+        );
+    end component;
+
+    component acc_register is
+    generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : inout std_logic_vector (15 downto 0);
+            acc_in : in std_logic_vector(8 downto 0);
+            acc_out : out std_logic_vector(8 downto 0)
+        );
+    end component;
+
+    component alu is
+        generic (DEBUG : boolean);
+        Port (
+            clk : in std_logic;
+            bus_data : in std_logic_vector (15 downto 0);
+            acc_in : out std_logic_vector(8 downto 0);
+            acc_out : in std_logic_vector(8 downto 0)
+            );
+    end component;
+
     signal clk : std_logic := '0';
-    constant clk_period :time := 20 ns;
+    signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
+    signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
+    signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
-    signal address : std_logic_vector (4 downto 0) := (others => 'Z');
-    signal ram_in  : std_logic_vector(8 downto 0) := (others => 'Z');
-    signal ram_out : std_logic_vector(8 downto 0) := (others => 'Z');
+    signal ram_debug : data_type;
 
+    constant LOAD     : std_logic_vector (3 downto 0) := "0001";
+    constant STORE    : std_logic_vector (3 downto 0) := "0010";
+    constant ADD      : std_logic_vector (3 downto 0) := "0011";
+    constant SUBT     : std_logic_vector (3 downto 0) := "0100";
 
-    signal operation:     std_logic_vector (1 downto 0) := (others => 'Z');
-    signal value :        std_logic_vector(4 downto 0) := (others => 'Z');
-    signal save_to_ram :  std_logic := 'Z';
-    signal save_to_pc :   std_logic := 'Z';
-    signal save_to_acc :  std_logic := 'Z';
-    signal next_pc :      std_logic := 'Z';
+    constant INPUT    : std_logic_vector (3 downto 0) := "0101";
+    constant OUTPUT   : std_logic_vector (3 downto 0) := "0110";
+    constant HALT     : std_logic_vector (3 downto 0) := "0111";
+    constant SKIPCOND : std_logic_vector (3 downto 0) := "1000";
+    constant JUMP     : std_logic_vector (3 downto 0) := "1001";
 BEGIN
-    random_access_memory: ram generic map (RAM_DATA => RAM_DATA)
-    port map (
-        address => address,
-        save => save_to_ram,
-        ram_in => ram_in,
-        ram_out => ram_out
+    random_access_memory: ram generic map (
+    RAM_DATA => (
+
+    HALT & NULL_ARGUMENT,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+
+    -- 5 (0x05)
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+
+    -- 10 (0x0A)
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+
+    -- 15 (0x0F)
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+
+    -- 20 (0x14)
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+
+    -- 25 (0x19)
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+    NULL_COMMAND,
+
+    -- 30 (0x1E)
+    NULL_COMMAND,
+    NULL_COMMAND
+
+    ), DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data,
+
+        ram_debug => ram_debug
     );
 
-    controller_a: controller port map (
-            instruction => ram_out,
-            operation => operation,
-            value => value,
-            address => address,
-            save_to_ram => save_to_ram,
-            save_to_pc => save_to_pc,
-            save_to_acc => save_to_acc,
-            next_pc => next_pc
+    position_counter: pc generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data
+    );
+
+    accumulator: acc_register generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data,
+        acc_in => acc_in,
+        acc_out => acc_out
+    );
+    ctrl: controller generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data,
+
+        acc_in => acc_in,
+        acc_out => acc_out,
+
+        input_data => input_data,
+        output_data => output_data
+    );
+
+    uut: alu generic map (DEBUG => DEBUG)
+    PORT MAP (
+        clk => clk,
+        bus_data => bus_data,
+
+        acc_in => acc_in,
+        acc_out => acc_out
     );
 
     start :process(run)
     begin
         if run = '1' then
-            address <= "00000";
-        else
-            address <= "ZZZZZ";
+            null;
         end if;
     end process;
-
-    debug_address <= address;
-    debug_ram_out <= ram_out;
 
 END;
