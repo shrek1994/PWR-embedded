@@ -9,7 +9,9 @@ entity ram is
     generic (RAM_DATA : data_type := (others => "000000000"); DEBUG : boolean := false; VERBOSE : boolean := false);
     Port (
         clk : in std_logic;
-        bus_data : inout std_logic_vector (15 downto 0)
+        bus_data : inout std_logic_vector (15 downto 0);
+
+        ram_debug : inout data_type
         );
 end ram;
 
@@ -26,6 +28,8 @@ architecture Behavioral of ram is
     type cmd_type is (NOTHING, SET_DATA, GET_DATA);
     signal current_cmd : cmd_type := NOTHING;
     signal sending_data : std_logic_vector (15 downto 0) := (others => '0');
+
+    signal data_ram : data_type;
 
     function to_string(state: state_type) return string is
     begin
@@ -80,7 +84,6 @@ begin
 end process;
 
 nextAddress: process(current_state, bus_data)
-    variable data_ram : data_type;
     variable init : boolean := true;
     variable current_cmd : cmd_type;
     variable id : std_logic_vector (2 downto 0);
@@ -89,7 +92,7 @@ nextAddress: process(current_state, bus_data)
     variable address : std_logic_vector(4 downto 0);
 begin
     if init then
-        data_ram := RAM_DATA;
+        data_ram <= RAM_DATA;
         init := false;
     end if;
 
@@ -119,7 +122,7 @@ begin
                 end if;
                 data := bus_data(8 downto 0);
                 print(DEBUG, "RAM: SET_DATA, address: " & str(address) & ", date: " & str(data));
-                data_ram(to_integer(unsigned(address))) := data;
+                data_ram(to_integer(unsigned(address))) <= data;
                 next_state <= IDLE;
             when others =>
                 next_state <= IDLE;
@@ -131,7 +134,7 @@ begin
                 should_send <= '1';
                 print(VERBOSE, "RAM: set sending data:" & str(sending_data));
             when SET_DATA =>
-                data_ram(to_integer(unsigned(address))) := data;
+                data_ram(to_integer(unsigned(address))) <= data;
             when others =>
                 null;
         end case;
@@ -154,6 +157,6 @@ begin
 end process;
 
 bus_data <= sending_data when sending = '1' else NULL_BUS_DATA;
-
+ram_debug <= data_ram;
 
 end Behavioral;

@@ -37,6 +37,8 @@ package utills is
     constant OxO3 : std_logic_vector (8 downto 0) := "ZZZZ" & "00011";
     constant OxO4 : std_logic_vector (8 downto 0) := "ZZZZ" & "00100";
 
+    constant OxOE : std_logic_vector (8 downto 0) := "ZZZZ" & "01110";
+
     constant Ox1A : std_logic_vector (8 downto 0) := "ZZZZ" & "11010";
     constant Ox1B : std_logic_vector (8 downto 0) := "ZZZZ" & "11011";
     constant Ox1C : std_logic_vector (8 downto 0) := "ZZZZ" & "11100";
@@ -61,9 +63,22 @@ package utills is
     type cmd_type is (LOAD, STORE, ADD, SUBT, INPUT, OUTPUT, HALT, SKIPCOND, JUMP);
     function str(cmd : cmd_type) return string;
 
+    procedure printRAM(active : boolean; data : data_type);
 end package utills;
 
 package body utills is
+    procedure printRAM(active : boolean; data : data_type) is
+        variable i : unsigned(5 downto 0);
+    begin
+        i := "000000";
+        print(active, "---------------------------------------------- RAM ----------------------------------------------");
+        for ram in data'range loop
+            print(active, str(std_logic_vector(i)) & ", 0x" & hstr(std_logic_vector(i)) & ": " & str(data(to_integer(i))));
+        i :=  i + 1;
+        end loop;
+        print(active, "-------------------------------------------- END RAM --------------------------------------------");
+    end;
+
 
     function str(cmd : cmd_type) return string is
     begin

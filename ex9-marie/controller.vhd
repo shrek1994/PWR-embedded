@@ -111,30 +111,25 @@ begin
                 next_state <= EXECUTE;
             when EXECUTE =>
                 print(DEBUG, "CTRL: ------------------------- EXECUTE ------------------------ instruction: " & str(current_cmd));
+                print(DEBUG, "CTRL: command: " & str(instruction_bits) & "-" & str(argument_bits) & ", data: " & str(data));
                 case current_cmd is
                     when LOAD =>
                         print(DEBUG, "CTRL: load: " & str(argument_bits));
-
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
-
                     when STORE =>
                         print(DEBUG, "CTRL: store: " & str(argument_bits));
-
                         send_bus_data <= ACC_ID & GET_CMD & NULL_DATA;
                         send_bus <= '1';
-
                         next_state <= EXECUTE_2;
                     when ADD =>
                         print(DEBUG, "CTRL: add: " & str(argument_bits));
-
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
                     when SUBT =>
                         print(DEBUG, "CTRL: subt: " & str(argument_bits));
-
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
@@ -144,9 +139,14 @@ begin
                         send_acc <= '1';
                         next_state <= FETCH;
                     when OUTPUT =>
-                        print(DEBUG, "CTRL: sending: " & str(acc_out));
+                        print(DEBUG, "CTRL: sending: " & str(send_out_data));
                         send_out <= '1';
                         next_state <= FETCH;
+                    when JUMP =>
+                        print(DEBUG, "CTRL: jumping to: " & str(argument_bits));
+                        send_bus_data <= PC_ID & SET_CMD & "ZZZZ" & argument_bits;
+                        send_bus <= '1';
+                        next_state <= EXECUTE_2;
                     when others =>
                         next_state <= HALT;
                 end case;
@@ -163,6 +163,8 @@ begin
                     when ADD =>
                         next_state <= STORE;
                     when SUBT =>
+                        next_state <= STORE;
+                    when JUMP =>
                         next_state <= STORE;
                     when others =>
                         next_state <= HALT;
@@ -186,6 +188,8 @@ begin
                     when SUBT =>
                         send_bus_data <= ALU_ID & SUBT_CMD & NULL_DATA;
                         send_bus <= '1';
+                        next_state <= FETCH;
+                    when JUMP =>
                         next_state <= FETCH;
                     when others =>
                         next_state <= HALT;

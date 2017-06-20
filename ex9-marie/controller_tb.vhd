@@ -26,7 +26,9 @@ architecture behavior of controller_tb is
     generic (RAM_DATA : data_type; DEBUG : boolean);
         Port (
             clk : in std_logic;
-            bus_data : inout std_logic_vector (15 downto 0)
+            bus_data : inout std_logic_vector (15 downto 0);
+
+            ram_debug : inout data_type
               );
     end component;
 
@@ -67,6 +69,8 @@ architecture behavior of controller_tb is
     signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
     signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
 
+    signal ram_debug : data_type;
+
     constant LOAD     : std_logic_vector (3 downto 0) := "0001";
     constant STORE    : std_logic_vector (3 downto 0) := "0010";
     constant ADD      : std_logic_vector (3 downto 0) := "0011";
@@ -80,6 +84,10 @@ architecture behavior of controller_tb is
 
     constant NULL_COMMAND : std_logic_vector (8 downto 0) := "000000000";
 
+    constant Ox1C_ZERO : std_logic_vector (8 downto 0) := "ZZZZ" & "11100";
+
+    constant Ox1C_ZERO_DATA : std_logic_vector (8 downto 0) := "000000000";
+
     constant Ox1D_DATA : std_logic_vector (8 downto 0) := "000010101";
     constant Ox1E_DATA : std_logic_vector (8 downto 0) := "000001010";
     constant SUM_1D_1E : std_logic_vector (8 downto 0) := "000011111";
@@ -87,49 +95,51 @@ architecture behavior of controller_tb is
     constant Ox1F_DATA : std_logic_vector (8 downto 0) := OUTPUT & NULL_ARGUMENT;
 
     constant DATA : std_logic_vector (8 downto 0) := "111000111";
-BEGIN
+BEGIN                               -- 0x00
     uut: ram generic map (RAM_DATA => (OUTPUT & NULL_ARGUMENT,
                                        LOAD & Ox1F(4 downto 0),
                                        OUTPUT & NULL_ARGUMENT,
                                        STORE & OxO4(4 downto 0),
-                                       NULL_COMMAND, -- should store 0x1f which is output
-                                       -- 5
+                                       NULL_COMMAND, -- should store command frow 0x1f which is output
+                                       -- 5 (0x05)
                                        LOAD & Ox1D(4 downto 0),
                                        ADD & Ox1E(4 downto 0),
                                        OUTPUT & NULL_ARGUMENT,
                                        SUBT & Ox1D(4 downto 0),
                                        OUTPUT & NULL_ARGUMENT,
-                                       -- 10
+                                       -- 10 (0x0A)
                                        INPUT & NULL_ARGUMENT,
-                                       OUTPUT& NULL_ARGUMENT,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       -- 15
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       -- 20
+                                       OUTPUT & NULL_ARGUMENT,
+                                       JUMP & OxOE(4 downto 0),
+                                       HALT & NULL_ARGUMENT,
+                                       LOAD & Ox1C_ZERO(4 downto 0), -- 0x0E
+                                       -- 15 (0x0F)
+                                       OUTPUT & NULL_ARGUMENT,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
-                                       NULL_COMMAND,
-                                       -- 25
-                                       NULL_COMMAND,
+                                       -- 20 (0x14)
                                        NULL_COMMAND,
                                        NULL_COMMAND,
                                        NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       -- 25 (0x19)
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       NULL_COMMAND,
+                                       Ox1C_ZERO_DATA,
                                        Ox1D_DATA,
-                                       -- 30
+                                       -- 30 (0x1E)
                                        Ox1E_DATA,
                                        Ox1F_DATA
                                        ), DEBUG => DEBUG)
     PORT MAP (
         clk => clk,
-        bus_data => bus_data
+        bus_data => bus_data,
+
+        ram_debug => ram_debug
     );
 
     uut2: pc generic map (DEBUG => DEBUG)
@@ -178,11 +188,13 @@ BEGIN
     begin
 
     print(DEBUG, "CTLR_TB - START !");
+    wait for 5 ns;
+    printRAM(DEBUG, ram_debug);
 
 
     print(DEBUG, "------------------------------------ FIRST SECENARIO (EMPTY ACC) ------------------------------------");
     -- 0x00 first output - everything clear - so output is "000000000"
-    wait for 75 ns;
+    wait for 70 ns;
     assert output_data = "000000000" report "expected " & ": '" & str("000000000") &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
 
@@ -223,12 +235,21 @@ BEGIN
     -- 810 ns
     print(DEBUG, "------------------------------------ SIXTH SECENARIO (INPUT) ------------------------------------");
 
-    -- 0x00 on output the same value as in input
+    -- on output the same value as in input
     input_data <= DATA;
-    wait for 135 ns;
+    wait for 70 ns;
+    input_data <= NULL_DATA;
+    wait for 65 ns;
     assert output_data = DATA report "expected " & ": '" & str(DATA) &"', got: '" & str(output_data) & "'";
     wait for 5 ns;
-    input_data <= NULL_DATA;
+
+    -- 950 ns
+    print(DEBUG, "------------------------------------ SEVENTH SECENARIO (JUMP AND LOAD ZERO) ------------------------------------");
+
+    -- on output ZERO
+    wait for 245 ns;
+    assert output_data = Ox1C_ZERO_DATA report "expected " & ": '" & str(Ox1C_ZERO_DATA) &"', got: '" & str(output_data) & "'";
+    wait for 5 ns;
 
     print(DEBUG, "CTLR_TB - DONE !");
     wait;
