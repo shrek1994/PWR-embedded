@@ -102,6 +102,7 @@ package body txt_util is
      begin
        write(msg_line, text);
        writeline(output, msg_line);
+       report text;
    end print;
 
 
@@ -112,7 +113,7 @@ package body txt_util is
    procedure print(active: boolean; text: string)  is
      begin
       if active then
-         print(text);
+--         print(text);
          report text;
       end if;
    end print;

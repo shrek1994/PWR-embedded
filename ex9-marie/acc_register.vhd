@@ -133,7 +133,7 @@ begin
                 next_state <= IDLE;
             when SET =>
                 reg <= data;
-                print(VERBOSE, "ACC: set:" & str(data));
+                print(DEBUG, "ACC: set:" & str(data));
                 next_state <= IDLE;
             when RESET =>
                 reg <= "000000000";
@@ -147,6 +147,13 @@ begin
     end case;
     end if;
 
+end process;
+
+startReceiving : process(acc_in)
+begin
+    if acc_in /= "ZZZZZZZZZ" then
+        print(DEBUG, "ACC: set acc_in:" & str(acc_in));
+    end if;
 end process;
 
 startSending: process(sending)

@@ -5,7 +5,7 @@ USE work.txt_util.ALL;
 USE work.utills.ALL;
 
 entity controller is
-  generic (DEBUG : boolean);
+  generic (DEBUG : boolean := false; VERBOSE : boolean := false);
   port(
         clk : in std_logic;
         bus_data : inout std_logic_vector (15 downto 0);
@@ -85,7 +85,7 @@ begin
 
         if falling_edge(clk) then
             if current_state /= next_state then
-                print(DEBUG, "CTRL: changing state");
+                print(VERBOSE, "CTRL: changing state");
             end if;
             current_state <= next_state;
         end if;
@@ -118,7 +118,7 @@ begin
                 next_state <= DECODE;
             when DECODE =>
                 receive <= '0';
-                print(DEBUG, "CTRL: DECODE: instruction_bits: " & str(instruction_bits));
+                print(VERBOSE, "CTRL: DECODE: instruction_bits: " & str(instruction_bits));
                 case instruction_bits is
                     when "0001" =>
                         current_cmd <= LOAD;
@@ -157,36 +157,36 @@ begin
                 print(DEBUG, "CTRL: command: " & str(instruction_bits) & "-" & str(argument_bits) & ", data: " & str(data));
                 case current_cmd is
                     when LOAD =>
-                        print(DEBUG, "CTRL: load: " & str(argument_bits));
+                        print(VERBOSE, "CTRL: load: " & str(argument_bits));
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
                     when STORE =>
-                        print(DEBUG, "CTRL: store: " & str(argument_bits));
+                        print(VERBOSE, "CTRL: store: " & str(argument_bits));
                         send_bus_data <= ACC_ID & GET_CMD & NULL_DATA;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
                     when ADD =>
-                        print(DEBUG, "CTRL: add: " & str(argument_bits));
+                        print(VERBOSE, "CTRL: add: " & str(argument_bits));
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
                     when SUBT =>
-                        print(DEBUG, "CTRL: subt: " & str(argument_bits));
+                        print(VERBOSE, "CTRL: subt: " & str(argument_bits));
                         send_bus_data <= RAM_ID & GET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
                     when INPUT =>
-                        print(DEBUG, "CTRL: input: " & str(data));
+                        print(VERBOSE, "CTRL: input: " & str(data));
                         send_acc_data <= data;
                         send_acc <= '1';
                         next_state <= FETCH;
                     when OUTPUT =>
-                        print(DEBUG, "CTRL: sending: " & str(send_out_data));
+                        print(VERBOSE, "CTRL: sending: " & str(send_out_data));
                         send_out <= '1';
                         next_state <= FETCH;
                     when JUMP =>
-                        print(DEBUG, "CTRL: jumping to: " & str(argument_bits));
+                        print(VERBOSE, "CTRL: jumping to: " & str(argument_bits));
                         send_bus_data <= PC_ID & SET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= EXECUTE_2;
@@ -223,7 +223,7 @@ begin
                     when LOAD =>
                         next_state <= STORE;
                     when STORE =>
-                        print(DEBUG, "CTRL: store into: " & str(argument_bits));
+                        print(VERBOSE, "CTRL: store into: " & str(argument_bits));
                         send_bus_data <= RAM_ID & SET_CMD & "ZZZZ" & argument_bits;
                         send_bus <= '1';
                         next_state <= STORE;
@@ -280,7 +280,7 @@ begin
             data := acc_out;
             print(DEBUG, "CTRL: starting sending out: " & str(data));
         else
-            print(DEBUG, "CTRL: ending sending out: " & str(data));
+            print(VERBOSE, "CTRL: ending sending out: " & str(data));
         end if;
     end process;
 
@@ -291,7 +291,7 @@ begin
             data := send_bus_data;
             print(DEBUG, "CTRL: starting sending bus: " & str(data));
         else
-            print(DEBUG, "CTRL: ending sending bus: " & str(data));
+            print(VERBOSE, "CTRL: ending sending bus: " & str(data));
         end if;
     end process;
 
@@ -302,7 +302,7 @@ begin
             data := send_acc_data;
             print(DEBUG, "CTRL: starting sending acc: " & str(data));
         else
-            print(DEBUG, "CTRL: ending sending acc: " & str(data));
+            print(VERBOSE, "CTRL: ending sending acc: " & str(data));
         end if;
     end process;
 

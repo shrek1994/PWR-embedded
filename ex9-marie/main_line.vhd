@@ -71,6 +71,7 @@ architecture behavior of main_line is
     signal bus_data : std_logic_vector (15 downto 0) := (others => 'Z');
     signal acc_in : std_logic_vector (8 downto 0) := (others => 'Z');
     signal acc_out : std_logic_vector (8 downto 0) := (others => 'Z');
+    signal output : std_logic_vector (8 downto 0) := (others => 'Z');
     signal ram_debug : data_type := (others => "ZZZZZZZZZ");
 
     signal start : std_logic := '0';
@@ -106,7 +107,7 @@ BEGIN
         acc_out => acc_out,
 
         input_data => input_data,
-        output_data => output_data
+        output_data => output
     );
 
     uut: alu generic map (DEBUG => DEBUG)
@@ -126,4 +127,12 @@ BEGIN
         wait for clk_period / 2;
     end process;
 
+    ourput: process(output)
+    begin
+        if output /= "UUUUUUUUU" and output /= "ZZZZZZZZZ" then
+            print("RESULT: 0b" & str(output) & ", 0x" & hstr(output));
+        end if;
+    end process;
+
+    output_data <= output;
 END;
