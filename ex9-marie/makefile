@@ -16,6 +16,8 @@ INTEGRATION_TESTS := \
 OBJ := $(TEST_BENCH:_tb=)
 STOP_TIME := 1ms
 
+marie: ram pc controller alu acc_register main_line_tb
+
 all: $(TEST_BENCH) $(INTEGRATION_TESTS)
 	@#@echo "napisac SPRAWKO !!!"
 

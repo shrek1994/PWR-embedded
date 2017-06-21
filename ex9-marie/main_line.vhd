@@ -127,7 +127,14 @@ BEGIN
         wait for clk_period / 2;
     end process;
 
-    ourput: process(output)
+    in_put: process(input_data)
+    begin
+        if input_data /= "UUUUUUUUU" and input_data /= "ZZZZZZZZZ" then
+            print("INPUT: 0b" & str(input_data) & ", 0x" & hstr(input_data));
+        end if;
+    end process;
+
+    out_put: process(output)
     begin
         if output /= "UUUUUUUUU" and output /= "ZZZZZZZZZ" then
             print("RESULT: 0b" & str(output) & ", 0x" & hstr(output));
